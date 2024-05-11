@@ -1,7 +1,10 @@
+// (C)ATLUS. (C)SEGA. :3
+
 #pragma once
 #include "CoreMinimal.h"
 #include "Evaluation/MovieSceneEvalTemplate.h"
 #include "MovieSceneEvtConditionalBranchData.h"
+#include "MovieSceneEvtSeqControllerSection.h"
 #include "MovieSceneEvtSeqControllerSectionData.h"
 #include "MovieSceneEvtSeqControllerSectionTemplate.generated.h"
 
@@ -22,5 +25,9 @@ public:
     FMovieSceneEvtConditionalBranchData CondBranchData;
     
     XRD777_API FMovieSceneEvtSeqControllerSectionTemplate();
+    FMovieSceneEvtSeqControllerSectionTemplate(const UMovieSceneEvtSeqControllerSection& Section);
+private:
+    virtual UScriptStruct& GetScriptStructImpl() const override { return *StaticStruct(); }
+    virtual void Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const override;
 };
 

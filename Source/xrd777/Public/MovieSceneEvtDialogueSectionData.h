@@ -17,6 +17,8 @@ private:
     TArray<FEvtDialoguePayload> KeyValues;
     
 public:
+    const TArray<FFrameNumber>& GetTimes() const { return Times; }
+    const TArray<FEvtDialoguePayload>& GetValues() const { return KeyValues; }
     FMovieSceneEvtDialogueSectionData();
 };
 

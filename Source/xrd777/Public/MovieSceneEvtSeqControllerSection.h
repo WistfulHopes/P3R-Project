@@ -8,7 +8,6 @@ UCLASS(Blueprintable, MinimalAPI)
 class UMovieSceneEvtSeqControllerSection : public UMovieSceneSection {
     GENERATED_BODY()
 public:
-private:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FMovieSceneEvtSeqControllerSectionData EventData;
     

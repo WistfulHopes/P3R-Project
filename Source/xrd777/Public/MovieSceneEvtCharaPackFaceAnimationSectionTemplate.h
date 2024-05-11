@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Evaluation/MovieSceneEvalTemplate.h"
+#include "MovieSceneEvtCharaPackFaceAnimationSection.h"
 #include "MovieSceneEvtCharaPackFaceAnimationSectionData.h"
 #include "MovieSceneEvtConditionalBranchData.h"
 #include "MovieSceneEvtCharaPackFaceAnimationSectionTemplate.generated.h"
@@ -22,5 +23,9 @@ public:
     FMovieSceneEvtConditionalBranchData CondBranchData;
     
     XRD777_API FMovieSceneEvtCharaPackFaceAnimationSectionTemplate();
+    FMovieSceneEvtCharaPackFaceAnimationSectionTemplate(const UMovieSceneEvtCharaPackFaceAnimationSection& Section);
+private:
+    virtual UScriptStruct& GetScriptStructImpl() const override { return *StaticStruct(); }
+    virtual void Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const override;
 };
 

@@ -60,5 +60,18 @@ public class xrd777 : ModuleRules {
             "UMG",
             "UimAssetPlugin",
         });
+
+        if (Target.Type == TargetRules.TargetType.Editor)
+        {
+            PublicDependencyModuleNames.AddRange(
+                new string[]
+                {
+                    "EditorStyle",
+                    "MovieSceneTools",
+                    "Sequencer",
+                    "UnrealEd"
+                }
+            );
+        }
     }
 }

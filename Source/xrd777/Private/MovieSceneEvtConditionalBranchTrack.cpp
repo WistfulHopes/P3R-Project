@@ -1,5 +1,7 @@
 #include "MovieSceneEvtConditionalBranchTrack.h"
 
-UMovieSceneEvtConditionalBranchTrack::UMovieSceneEvtConditionalBranchTrack() {
+UMovieSceneEvtConditionalBranchTrack::UMovieSceneEvtConditionalBranchTrack(const FObjectInitializer& Init)
+	: Super(Init)
+{
+	CondBranchData = FMovieSceneEvtConditionalBranchData();
 }
-

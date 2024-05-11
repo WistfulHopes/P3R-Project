@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Evaluation/MovieSceneEvalTemplate.h"
 #include "MovieSceneObjectBindingID.h"
+#include "MovieSceneEvtDialogueOptionsSection.h"
 #include "MovieSceneEvtDialogueOptionsSectionData.h"
 #include "MovieSceneEvtDialogueOptionsSectionTemplate.generated.h"
 
@@ -22,5 +23,9 @@ public:
     uint8 bFireEventsWhenBackwards: 1;
     
     XRD777_API FMovieSceneEvtDialogueOptionsSectionTemplate();
+    FMovieSceneEvtDialogueOptionsSectionTemplate(const UMovieSceneEvtDialogueOptionsSection& Section);
+private:
+    virtual UScriptStruct& GetScriptStructImpl() const override { return *StaticStruct(); }
+    virtual void Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const override;
 };
 

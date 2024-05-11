@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Evaluation/MovieSceneEvalTemplate.h"
 #include "MovieSceneObjectBindingID.h"
+#include "MovieSceneEvtCharaPropAttachSection.h"
 #include "MovieSceneEvtCharaPropAttachSectionData.h"
 #include "MovieSceneEvtConditionalBranchData.h"
 #include "MovieSceneEvtCharaPropAttachSectionTemplate.generated.h"
@@ -26,5 +27,9 @@ public:
     FMovieSceneEvtConditionalBranchData CondBranchData;
     
     XRD777_API FMovieSceneEvtCharaPropAttachSectionTemplate();
+    FMovieSceneEvtCharaPropAttachSectionTemplate(const UMovieSceneEvtCharaPropAttachSection& Section);
+private:
+    virtual UScriptStruct& GetScriptStructImpl() const override { return *StaticStruct(); }
+    virtual void Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const override;
 };
 

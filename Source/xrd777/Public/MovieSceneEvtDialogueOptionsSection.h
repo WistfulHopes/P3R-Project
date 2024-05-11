@@ -12,7 +12,7 @@ public:
 private:
     UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
     FNameCurve Events;
-    
+public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FMovieSceneEvtDialogueOptionsSectionData EventData;
     
