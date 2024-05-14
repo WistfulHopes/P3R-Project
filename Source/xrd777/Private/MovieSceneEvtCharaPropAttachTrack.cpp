@@ -1,5 +1,9 @@
 #include "MovieSceneEvtCharaPropAttachTrack.h"
 #include <xrd777/Public/MovieSceneEvtCharaPropAttachSection.h>
+#include <xrd777/Public/MovieSceneEvtCharaPropAttachSectionTemplate.h>
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "IMovieSceneTracksModule.h"
+#include "Evaluation/MovieSceneEvaluationTrack.h"
 
 #define LOCTEXT_NAMESPACE "MovieSceneEvtCharaPropAttachTrack"
 
@@ -60,6 +64,20 @@ FText UMovieSceneEvtCharaPropAttachTrack::GetDefaultDisplayName() const
 	return LOCTEXT("DisplayName", "Evt Chara Prop Attach");
 }
 #endif
+
+void UMovieSceneEvtCharaPropAttachTrack::PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::SpawnObjects));
+	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
+	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+
+	for (int i = 0; i < Track.GetChildTemplates().Num(); i++) {
+		((FMovieSceneEvtCharaPropAttachSectionTemplate&)Track.GetChildTemplate(i)).CondBranchData = CondBranchData;
+	}
+}
+
+FMovieSceneEvalTemplatePtr UMovieSceneEvtCharaPropAttachTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtCharaPropAttachSectionTemplate(*CastChecked<UMovieSceneEvtCharaPropAttachSection>(&InSection));
+}
 
 #undef LOCTEXT_NAMESPACE
 

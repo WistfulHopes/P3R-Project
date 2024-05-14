@@ -27,10 +27,13 @@ FMovieSceneEvtCharaPropAttachSectionTemplate::FMovieSceneEvtCharaPropAttachSecti
 
 FMovieSceneEvtCharaPropAttachSectionTemplate::FMovieSceneEvtCharaPropAttachSectionTemplate(const UMovieSceneEvtCharaPropAttachSection& Section)
     : EventData(Section.EventData),
-    bFireEventsWhenBackwards(false),
-    bFireEventsWhenForwards(false)
+    bFireEventsWhenBackwards(true),
+    bFireEventsWhenForwards(true)
 {}
 
 void FMovieSceneEvtCharaPropAttachSectionTemplate::Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
+    ExecutionTokens.Add(FEvtCharaPropAttachExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
+}
+void FMovieSceneEvtCharaPropAttachSectionTemplate::EvaluateSwept(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const TRange<FFrameNumber>& SweptRange, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
     ExecutionTokens.Add(FEvtCharaPropAttachExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
 }

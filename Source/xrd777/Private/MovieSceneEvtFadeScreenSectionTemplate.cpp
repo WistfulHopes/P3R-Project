@@ -27,10 +27,14 @@ FMovieSceneEvtFadeScreenSectionTemplate::FMovieSceneEvtFadeScreenSectionTemplate
 
 FMovieSceneEvtFadeScreenSectionTemplate::FMovieSceneEvtFadeScreenSectionTemplate(const UMovieSceneEvtFadeScreenSection& Section)
     : EventData(Section.EventData),
-    bFireEventsWhenBackwards(false),
-    bFireEventsWhenForwards(false)
+    bFireEventsWhenBackwards(true),
+    bFireEventsWhenForwards(true)
 {}
 
 void FMovieSceneEvtFadeScreenSectionTemplate::Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
+    ExecutionTokens.Add(FEvtFadeScreenExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
+}
+
+void FMovieSceneEvtFadeScreenSectionTemplate::EvaluateSwept(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const TRange<FFrameNumber>& SweptRange, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
     ExecutionTokens.Add(FEvtFadeScreenExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
 }

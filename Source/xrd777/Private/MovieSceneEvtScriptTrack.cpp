@@ -1,5 +1,8 @@
 #include "MovieSceneEvtScriptTrack.h"
 #include <xrd777/Public/MovieSceneEvtScriptSection.h>
+#include <xrd777/Public/MovieSceneEvtScriptSectionTemplate.h>
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "IMovieSceneTracksModule.h"
 
 #define LOCTEXT_NAMESPACE "MovieSceneEvtScriptTrack"
 
@@ -60,5 +63,19 @@ FText UMovieSceneEvtScriptTrack::GetDefaultDisplayName() const
 	return LOCTEXT("DisplayName", "Evt Script");
 }
 #endif
+
+void UMovieSceneEvtScriptTrack::PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::PostEvaluation));
+	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
+	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+
+	for (int i = 0; i < Track.GetChildTemplates().Num(); i++) {
+		((FMovieSceneEvtScriptSectionTemplate&)Track.GetChildTemplate(i)).CondBranchData = CondBranchData;
+	}
+}
+
+FMovieSceneEvalTemplatePtr UMovieSceneEvtScriptTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtScriptSectionTemplate(*CastChecked<UMovieSceneEvtScriptSection>(&InSection));
+}
 
 #undef LOCTEXT_NAMESPACE

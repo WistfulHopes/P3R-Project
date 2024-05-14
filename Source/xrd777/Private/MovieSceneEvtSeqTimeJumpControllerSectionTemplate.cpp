@@ -33,3 +33,6 @@ FMovieSceneEvtSeqTimeJumpControllerSectionTemplate::FMovieSceneEvtSeqTimeJumpCon
 void FMovieSceneEvtSeqTimeJumpControllerSectionTemplate::Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
     ExecutionTokens.Add(FEvtSeqTimeJumpExecutionToken(EventData, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
 }
+void FMovieSceneEvtSeqTimeJumpControllerSectionTemplate::EvaluateSwept(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const TRange<FFrameNumber>& SweptRange, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
+    ExecutionTokens.Add(FEvtSeqTimeJumpExecutionToken(EventData, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
+}

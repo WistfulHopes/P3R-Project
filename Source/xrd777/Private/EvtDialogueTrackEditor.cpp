@@ -11,6 +11,8 @@
 #include "Sequencer/Public/SequencerSectionPainter.h"
 #include "CommonMovieSceneTools.h"
 //#include "Sequencer/Public/ISequencerSection.h"
+#include "EvtConditionBranchDetailsCustom.h"
+#include "IDetailsView.h"
 
 #define LOCTEXT_NAMESPACE "FEvtDialogueTrackEditor"
 
@@ -148,20 +150,54 @@ void FEvtDialogueTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuil
 
 void FEvtDialogueTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
 	UMovieSceneEvtDialogueTrack* DialogTrack = Cast<UMovieSceneEvtDialogueTrack>(Track);
-	MenuBuilder.AddMenuEntry(
-		LOCTEXT("EvtDialogueEditTrackTest", "Test Button"),
-		LOCTEXT("EvtDialogueEditTrackTestTooltip", "Example context menu button"),
-		FSlateIcon(),
-		FUIAction(
-			FExecuteAction::CreateSP(this, &FEvtDialogueTrackEditor::OnTestButtonExecute, DialogTrack),
-			FCanExecuteAction::CreateLambda([=]() { return Track != nullptr; })
-		),
-		"Edit",
-		EUserInterfaceActionType::Check
+	/*
+	auto EvtConditionalBranchDelegate = [](FMenuBuilder& InnerMenuBuilder) {
+		InnerMenuBuilder.AddWidget(
+			SNew(SBox)
+			.WidthOverride(200.0f)
+			.HeightOverride(200.0f)
+			.Padding(FMargin(5.0f, 5.0f))
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				.AutoWidth()
+				[
+					SNew(STextBlock).Text(FText::FromString(TEXT("Conditional Branch WIP (Slot 1)")))
+				]
+				+ SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				.AutoWidth()
+				[
+					SNew(STextBlock).Text(FText::FromString(TEXT("Conditional Branch WIP (Slot 2)")))
+				]
+			],
+			FText::GetEmpty(), true, false
+		);
+	};
+	*/
+	MenuBuilder.AddSubMenu(
+		LOCTEXT("EvtDialogueEditConditionalBrach", "Conditional Data"), 
+		FText(), 
+		//FNewMenuDelegate::CreateLambda(EvtConditionalBranchDelegate),
+		FNewMenuDelegate::CreateRaw(this, &FEvtDialogueTrackEditor::BuildEventConditionalBranchMenu, DialogTrack),
+		false,
+		FSlateIcon());
+}
+
+void FEvtDialogueTrackEditor::BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtDialogueTrack* DialogTrack) {
+	FDetailsViewArgs DetailViewArgs = FDetailsViewArgs(false, false, false, FDetailsViewArgs::ActorsUseNameArea, true, nullptr, false, FName());
+	TSharedRef<IDetailsView> DetailsView = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor").CreateDetailView(DetailViewArgs);
+	DetailsView->RegisterInstancedCustomPropertyLayout(
+		UMovieSceneEvtDialogueTrack::StaticClass(), 
+		FOnGetDetailCustomizationInstance::CreateLambda([DialogTrack] { return FEvtConditionBranchDetailsCustom::MakeInstance(*DialogTrack); })
 	);
+	DetailsView->SetObject(DialogTrack);
+	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
 }
 
 void FEvtDialogueTrackEditor::OnTestButtonExecute(UMovieSceneEvtDialogueTrack* Track) {
+	
 }
 
 bool FEvtDialogueTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const {

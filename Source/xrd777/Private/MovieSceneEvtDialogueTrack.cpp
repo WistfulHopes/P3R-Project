@@ -1,8 +1,13 @@
 #include "MovieSceneEvtDialogueTrack.h"
 #include <xrd777/Public/MovieSceneEvtDialogueSection.h>
 #include <xrd777/Public/MovieSceneEvtDialogueSectionTemplate.h>
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "IMovieSceneTracksModule.h"
+#include "Logging/LogMacros.h"
 
 #define LOCTEXT_NAMESPACE "MovieSceneEvtDialogueTrack"
+
+DEFINE_LOG_CATEGORY_STATIC(LogEvtDialogueTrackReal, Log, All);
 
 UMovieSceneEvtDialogueTrack::UMovieSceneEvtDialogueTrack(const FObjectInitializer& Init)
 	: Super(Init)
@@ -65,6 +70,20 @@ FText UMovieSceneEvtDialogueTrack::GetDefaultDisplayName() const
 	return LOCTEXT("DisplayName", "Evt Dialog");
 }
 #endif
+
+EMovieSceneCompileResult UMovieSceneEvtDialogueTrack::CustomCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	return Compile(Track, Args);
+}
+
+void UMovieSceneEvtDialogueTrack::PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::PreEvaluation));
+	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
+	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+
+	for (int i = 0; i < Track.GetChildTemplates().Num(); i++) {
+		((FMovieSceneEvtDialogueSectionTemplate&)Track.GetChildTemplate(i)).CondBranchData = CondBranchData;
+	}
+}
 
 #undef LOCTEXT_NAMESPACE
 

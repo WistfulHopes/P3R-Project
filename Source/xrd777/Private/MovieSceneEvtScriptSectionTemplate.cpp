@@ -27,10 +27,14 @@ FMovieSceneEvtScriptSectionTemplate::FMovieSceneEvtScriptSectionTemplate() {
 
 FMovieSceneEvtScriptSectionTemplate::FMovieSceneEvtScriptSectionTemplate(const UMovieSceneEvtScriptSection& Section)
     : EventData(Section.EventData),
-    bFireEventsWhenBackwards(false),
-    bFireEventsWhenForwards(false)
+    bFireEventsWhenBackwards(true),
+    bFireEventsWhenForwards(true)
 {}
 
 void FMovieSceneEvtScriptSectionTemplate::Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
+    ExecutionTokens.Add(FEvtScriptExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
+}
+
+void FMovieSceneEvtScriptSectionTemplate::EvaluateSwept(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const TRange<FFrameNumber>& SweptRange, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
     ExecutionTokens.Add(FEvtScriptExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
 }

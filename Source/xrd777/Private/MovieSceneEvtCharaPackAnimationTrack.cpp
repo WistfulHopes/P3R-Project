@@ -1,5 +1,9 @@
 #include "MovieSceneEvtCharaPackAnimationTrack.h"
 #include <xrd777/Public/MovieSceneEvtCharaPackAnimationSection.h>
+#include <xrd777/Public/MovieSceneEvtCharaPackAnimationSectionTemplate.h>
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "IMovieSceneTracksModule.h"
+#include "Evaluation/MovieSceneEvaluationTrack.h"
 
 #define LOCTEXT_NAMESPACE "MovieSceneEvtCharaPackAnimationTrack"
 
@@ -60,5 +64,19 @@ FText UMovieSceneEvtCharaPackAnimationTrack::GetDefaultDisplayName() const
 	return LOCTEXT("DisplayName", "Evt Chara Pack Anim");
 }
 #endif
+
+void UMovieSceneEvtCharaPackAnimationTrack::PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::SpawnObjects));
+	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
+	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+
+	for (int i = 0; i < Track.GetChildTemplates().Num(); i++) {
+		((FMovieSceneEvtCharaPackAnimationSectionTemplate&)Track.GetChildTemplate(i)).CondBranchData = CondBranchData;
+	}
+}
+
+FMovieSceneEvalTemplatePtr UMovieSceneEvtCharaPackAnimationTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtCharaPackAnimationSectionTemplate(*CastChecked<UMovieSceneEvtCharaPackAnimationSection>(&InSection));
+}
 
 #undef LOCTEXT_NAMESPACE

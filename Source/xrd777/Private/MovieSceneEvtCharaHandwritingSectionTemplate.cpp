@@ -27,10 +27,13 @@ FMovieSceneEvtCharaHandwritingSectionTemplate::FMovieSceneEvtCharaHandwritingSec
 
 FMovieSceneEvtCharaHandwritingSectionTemplate::FMovieSceneEvtCharaHandwritingSectionTemplate(const UMovieSceneEvtCharaHandwritingSection& Section)
     : EventData(Section.EventData),
-    bFireEventsWhenBackwards(false),
-    bFireEventsWhenForwards(false)
+    bFireEventsWhenBackwards(true),
+    bFireEventsWhenForwards(true)
 {}
 
 void FMovieSceneEvtCharaHandwritingSectionTemplate::Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
+    ExecutionTokens.Add(FEvtCharaHandwritingExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
+}
+void FMovieSceneEvtCharaHandwritingSectionTemplate::EvaluateSwept(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const TRange<FFrameNumber>& SweptRange, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
     ExecutionTokens.Add(FEvtCharaHandwritingExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
 }

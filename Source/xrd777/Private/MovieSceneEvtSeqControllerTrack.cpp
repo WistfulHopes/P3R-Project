@@ -1,5 +1,8 @@
 #include "MovieSceneEvtSeqControllerTrack.h"
 #include <xrd777/Public/MovieSceneEvtSeqControllerSection.h>
+#include <xrd777/Public/MovieSceneEvtSeqControllerSectionTemplate.h>
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "IMovieSceneTracksModule.h"
 
 #define LOCTEXT_NAMESPACE "MovieSceneEvtSeqControllerTrack"
 
@@ -60,5 +63,19 @@ FText UMovieSceneEvtSeqControllerTrack::GetDefaultDisplayName() const
 	return LOCTEXT("DisplayName", "Evt Sequence Controller");
 }
 #endif
+
+void UMovieSceneEvtSeqControllerTrack::PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::PostEvaluation));
+	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
+	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+
+	for (int i = 0; i < Track.GetChildTemplates().Num(); i++) {
+		((FMovieSceneEvtSeqControllerSectionTemplate&)Track.GetChildTemplate(i)).CondBranchData = CondBranchData;
+	}
+}
+
+FMovieSceneEvalTemplatePtr UMovieSceneEvtSeqControllerTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtSeqControllerSectionTemplate(*CastChecked<UMovieSceneEvtSeqControllerSection>(&InSection));
+}
 
 #undef LOCTEXT_NAMESPACE

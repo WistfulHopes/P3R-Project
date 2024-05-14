@@ -82,6 +82,10 @@ void UMovieSceneEvtAdxSoundManageTrack::PostCompile(FMovieSceneEvaluationTrack& 
 	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::SpawnObjects));
 	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
 	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+
+	for (int i = 0; i < Track.GetChildTemplates().Num(); i++) {
+		((FMovieSceneEvtAdxSoundManageSectionTemplate&)Track.GetChildTemplate(i)).CondBranchData = CondBranchData;
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

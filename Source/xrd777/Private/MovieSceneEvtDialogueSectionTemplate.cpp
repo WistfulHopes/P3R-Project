@@ -3,6 +3,9 @@
 #pragma once
 
 #include "MovieSceneEvtDialogueSectionTemplate.h"
+#include "Logging/LogMacros.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogEvtDialogueSectionTemplate, Log, All);
 
 struct FEvtDialogueExecutionToken : IMovieSceneExecutionToken {
     FMovieSceneEvtDialogueSectionData EventData;
@@ -29,10 +32,15 @@ FMovieSceneEvtDialogueSectionTemplate::FMovieSceneEvtDialogueSectionTemplate() {
 
 FMovieSceneEvtDialogueSectionTemplate::FMovieSceneEvtDialogueSectionTemplate(const UMovieSceneEvtDialogueSection& InSection)
     : EventData(InSection.EventData),
-    bFireEventsWhenBackwards(false),
-    bFireEventsWhenForwards(false)
+    bFireEventsWhenBackwards(true),
+    bFireEventsWhenForwards(true),
+    CondBranchData(InSection.CondBranchData)
 {}
 
 void FMovieSceneEvtDialogueSectionTemplate::Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
+    ExecutionTokens.Add(FEvtDialogueExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
+}
+
+void FMovieSceneEvtDialogueSectionTemplate::EvaluateSwept(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const TRange<FFrameNumber>& SweptRange, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
     ExecutionTokens.Add(FEvtDialogueExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
 }

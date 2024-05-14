@@ -1,5 +1,8 @@
 #include "MovieSceneEvtCharaHandwritingTrack.h"
 #include <xrd777/Public/MovieSceneEvtCharaHandwritingSection.h>
+#include <xrd777/Public/MovieSceneEvtCharaHandwritingSectionTemplate.h>
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "IMovieSceneTracksModule.h"
 
 #define LOCTEXT_NAMESPACE "MovieSceneEvtCharaHandwritingTrack"
 
@@ -60,5 +63,19 @@ FText UMovieSceneEvtCharaHandwritingTrack::GetDefaultDisplayName() const
 	return LOCTEXT("DisplayName", "Evt Chara Handwriting");
 }
 #endif
+
+void UMovieSceneEvtCharaHandwritingTrack::PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::SpawnObjects));
+	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
+	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+
+	for (int i = 0; i < Track.GetChildTemplates().Num(); i++) {
+		((FMovieSceneEvtCharaHandwritingSectionTemplate&)Track.GetChildTemplate(i)).CondBranchData = CondBranchData;
+	}
+}
+
+FMovieSceneEvalTemplatePtr UMovieSceneEvtCharaHandwritingTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtCharaHandwritingSectionTemplate(*CastChecked<UMovieSceneEvtCharaHandwritingSection>(&InSection));
+}
 
 #undef LOCTEXT_NAMESPACE

@@ -26,10 +26,13 @@ FMovieSceneEvtCharaOperationControllerSectionTemplate::FMovieSceneEvtCharaOperat
 
 FMovieSceneEvtCharaOperationControllerSectionTemplate::FMovieSceneEvtCharaOperationControllerSectionTemplate(const UMovieSceneEvtCharaOperationControllerSection& InSection)
     : EventData(InSection.EventData),
-    bFireEventsWhenBackwards(false),
-    bFireEventsWhenForwards(false)
+    bFireEventsWhenBackwards(true),
+    bFireEventsWhenForwards(true)
 {}
 
 void FMovieSceneEvtCharaOperationControllerSectionTemplate::Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
+    ExecutionTokens.Add(FEvtCharaOperationControllerExecutionToken(EventData, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
+}
+void FMovieSceneEvtCharaOperationControllerSectionTemplate::EvaluateSwept(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const TRange<FFrameNumber>& SweptRange, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
     ExecutionTokens.Add(FEvtCharaOperationControllerExecutionToken(EventData, bFireEventsWhenForwards, bFireEventsWhenBackwards, CondBranchData));
 }

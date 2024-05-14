@@ -1,5 +1,9 @@
 #include "MovieSceneEvtCharaOperationControllerTrack.h"
 #include <xrd777/Public/MovieSceneEvtCharaOperationControllerSection.h>
+#include <xrd777/Public/MovieSceneEvtCharaOperationControllerSectionTemplate.h>
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "IMovieSceneTracksModule.h"
+#include "Evaluation/MovieSceneEvaluationTrack.h"
 
 #define LOCTEXT_NAMESPACE "MovieSceneEvtCharaOperationControllerTrack"
 
@@ -60,6 +64,21 @@ FText UMovieSceneEvtCharaOperationControllerTrack::GetDefaultDisplayName() const
 	return LOCTEXT("DisplayName", "Evt Chara Operation Controller");
 }
 #endif
+
+FMovieSceneEvalTemplatePtr UMovieSceneEvtCharaOperationControllerTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtCharaOperationControllerSectionTemplate(*CastChecked<UMovieSceneEvtCharaOperationControllerSection>(&InSection));
+}
+
+void UMovieSceneEvtCharaOperationControllerTrack::PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::SpawnObjects));
+	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
+	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+
+	for (int i = 0; i < Track.GetChildTemplates().Num(); i++) {
+		((FMovieSceneEvtCharaOperationControllerSectionTemplate&)Track.GetChildTemplate(i)).CondBranchData = CondBranchData;
+	}
+
+}
 
 #undef LOCTEXT_NAMESPACE
 

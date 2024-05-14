@@ -3,6 +3,7 @@
 #include "MovieScene/Public/Evaluation/MovieSceneEvalTemplate.h"
 #include "Compilation/IMovieSceneTrackTemplateProducer.h"
 #include "MovieSceneEvtConditionalBranchTrack.h"
+#include "Evaluation/MovieSceneEvaluationTrack.h"
 #include "MovieSceneEvtDialogueTrack.generated.h"
 
 class UMovieSceneSection;
@@ -34,6 +35,8 @@ public:
     virtual const TArray<UMovieSceneSection*>& GetAllSections() const override;
     virtual bool HasSection(const UMovieSceneSection& Section) const override;
     virtual bool SupportsMultipleRows() const override { return true; }
+    virtual EMovieSceneCompileResult CustomCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const override;
+    virtual void PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const override;
 
     // IMovieSceneTrackTemplateProducer interface
     virtual FMovieSceneEvalTemplatePtr CreateTemplateForSection(const UMovieSceneSection& InSection) const override;

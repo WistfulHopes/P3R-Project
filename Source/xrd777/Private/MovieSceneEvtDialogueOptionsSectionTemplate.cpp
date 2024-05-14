@@ -25,10 +25,13 @@ FMovieSceneEvtDialogueOptionsSectionTemplate::FMovieSceneEvtDialogueOptionsSecti
 
 FMovieSceneEvtDialogueOptionsSectionTemplate::FMovieSceneEvtDialogueOptionsSectionTemplate(const UMovieSceneEvtDialogueOptionsSection& Section)
     : EventData(Section.EventData),
-    bFireEventsWhenBackwards(false),
-    bFireEventsWhenForwards(false)
+    bFireEventsWhenBackwards(true),
+    bFireEventsWhenForwards(true)
 {}
 
 void FMovieSceneEvtDialogueOptionsSectionTemplate::Evaluate(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
+    ExecutionTokens.Add(FEvtDialogueOptionsExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards));
+}
+void FMovieSceneEvtDialogueOptionsSectionTemplate::EvaluateSwept(const FMovieSceneEvaluationOperand& Operand, const FMovieSceneContext& Context, const TRange<FFrameNumber>& SweptRange, const FPersistentEvaluationData& PersistentData, FMovieSceneExecutionTokens& ExecutionTokens) const {
     ExecutionTokens.Add(FEvtDialogueOptionsExecutionToken(EventData, EventReceivers, bFireEventsWhenForwards, bFireEventsWhenBackwards));
 }

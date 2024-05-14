@@ -1,5 +1,9 @@
 #include "MovieSceneEvtDialogueOptionsTrack.h"
 #include <xrd777/Public/MovieSceneEvtDialogueOptionsSection.h>
+#include <xrd777/Public/MovieSceneEvtDialogueOptionsSectionTemplate.h>
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "IMovieSceneTracksModule.h"
+#include "Evaluation/MovieSceneEvaluationTrack.h"
 
 #define LOCTEXT_NAMESPACE "MovieSceneEvtDialogueOptionsTrack"
 
@@ -61,6 +65,16 @@ FText UMovieSceneEvtDialogueOptionsTrack::GetDefaultDisplayName() const
 	return LOCTEXT("DisplayName", "Evt Dialog Option");
 }
 #endif
+
+void UMovieSceneEvtDialogueOptionsTrack::PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::SpawnObjects));
+	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
+	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+}
+
+FMovieSceneEvalTemplatePtr UMovieSceneEvtDialogueOptionsTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtDialogueOptionsSectionTemplate(*CastChecked<UMovieSceneEvtDialogueOptionsSection>(&InSection));
+}
 
 #undef LOCTEXT_NAMESPACE
 

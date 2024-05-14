@@ -31,15 +31,17 @@ public:
 	FEvtScriptTrackEditor(TSharedRef<ISequencer> InSequencer);
 
 	// ISequencerTrackEditor interface
-
-	//virtual TSharedRef<ISequencerSection> MakeSectionInterface(UMovieSceneSection& SectionObject, UMovieSceneTrack& Track, FGuid ObjectBinding) override;
-	virtual void BuildAddTrackMenu(FMenuBuilder& MenuBuilder) override;
+	virtual FMovieSceneEvalTemplatePtr CreateTemplateForSection(const UMovieSceneSection& InSection) const;
+	virtual void BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilder, const TArray<FGuid>& ObjectBindings, const UClass* ObjectClass) override;
+	virtual void BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) override;
 	virtual bool SupportsSequence(UMovieSceneSequence* InSequence) const override;
 	virtual bool SupportsType(TSubclassOf<UMovieSceneTrack> Type) const override;
 	virtual const FSlateBrush* GetIconBrush() const override;
 
+	void BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtScriptTrack* Track);
+
 private:
-	void HandleAddEvtScriptTrackMenuEntryExecute();
+	void HandleAddEvtScriptTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);
 	bool HandleAddEvtScriptTrackMenuEntryCanExecute() const;
 };
 

@@ -1,5 +1,9 @@
 #include "MovieSceneEvtFieldAnimationTrack.h"
 #include <xrd777/Public/MovieSceneEvtFieldAnimationSection.h>
+#include <xrd777/Public/MovieSceneEvtFieldAnimationSectionTemplate.h>
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "IMovieSceneTracksModule.h"
+#include "Evaluation/MovieSceneEvaluationTrack.h"
 
 #define LOCTEXT_NAMESPACE "MovieSceneEvtFadeAnimationTrack"
 
@@ -60,5 +64,19 @@ FText UMovieSceneEvtFieldAnimationTrack::GetDefaultDisplayName() const
 	return LOCTEXT("DisplayName", "Evt Field Anim");
 }
 #endif
+
+void UMovieSceneEvtFieldAnimationTrack::PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::SpawnObjects));
+	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
+	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+
+	for (int i = 0; i < Track.GetChildTemplates().Num(); i++) {
+		((FMovieSceneEvtFieldAnimationSectionTemplate&)Track.GetChildTemplate(i)).CondBranchData = CondBranchData;
+	}
+}
+
+FMovieSceneEvalTemplatePtr UMovieSceneEvtFieldAnimationTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtFieldAnimationSectionTemplate(*CastChecked<UMovieSceneEvtFieldAnimationSection>(&InSection));
+}
 
 #undef LOCTEXT_NAMESPACE

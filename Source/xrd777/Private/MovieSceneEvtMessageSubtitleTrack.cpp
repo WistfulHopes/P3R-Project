@@ -1,5 +1,9 @@
 #include "MovieSceneEvtMessageSubtitleTrack.h"
 #include <xrd777/Public/MovieSceneEvtMessageSubtitleSection.h>
+#include <xrd777/Public/MovieSceneEvtMessageSubtitleSectionTemplate.h>
+#include "Tracks/MovieSceneSpawnTrack.h"
+#include "IMovieSceneTracksModule.h"
+#include "Evaluation/MovieSceneEvaluationTrack.h"
 
 #define LOCTEXT_NAMESPACE "MovieSceneEvtSeqControllerTrack"
 
@@ -60,5 +64,19 @@ FText UMovieSceneEvtMessageSubtitleTrack::GetDefaultDisplayName() const
 	return LOCTEXT("DisplayName", "Evt Msg Subtitle");
 }
 #endif
+
+void UMovieSceneEvtMessageSubtitleTrack::PostCompile(FMovieSceneEvaluationTrack& Track, const FMovieSceneTrackCompilerArgs& Args) const {
+	Track.SetEvaluationGroup(IMovieSceneTracksModule::GetEvaluationGroupName(EBuiltInEvaluationGroup::SpawnObjects));
+	Track.SetEvaluationPriority(UMovieSceneSpawnTrack::GetEvaluationPriority() - 100);
+	Track.SetEvaluationMethod(EEvaluationMethod::Swept);
+
+	for (int i = 0; i < Track.GetChildTemplates().Num(); i++) {
+		((FMovieSceneEvtMessageSubtitleSectionTemplate&)Track.GetChildTemplate(i)).CondBranchData = CondBranchData;
+	}
+}
+
+FMovieSceneEvalTemplatePtr UMovieSceneEvtMessageSubtitleTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtMessageSubtitleSectionTemplate(*CastChecked<UMovieSceneEvtMessageSubtitleSection>(&InSection));
+}
 
 #undef LOCTEXT_NAMESPACE
