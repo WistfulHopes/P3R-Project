@@ -48,6 +48,7 @@ public:
 			FStyleDefaults::GetFontInfo()
 		);
 		*/
+		/*
 		FSlateDrawElement::MakeBox(
 			Painter.DrawElements,
 			Painter.LayerId + 1,
@@ -56,7 +57,7 @@ public:
 			ESlateDrawEffect::None,
 			FLinearColor(0, 1, 0, 1)
 		);
-
+		*/
 		/*
 		TArray<TTuple<FFrameNumber&, FEvtDialoguePayload&>> TimesToValues = TArray<TTuple<FFrameNumber&, FEvtDialoguePayload&>>();
 		if (DialogSection.EventData.GetTimes().Num() == DialogSection.EventData.GetValues().Num()) {
@@ -137,7 +138,7 @@ void FEvtDialogueTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuil
 	}
 	if (bIsAtlusEventManager) {
 		MenuBuilder.AddMenuEntry(
-			LOCTEXT("AddEvtDialogueTrack_ObjectBinding", "Event Dialog"),
+			LOCTEXT("AddEvtDialogueTrack_ObjectBinding", "[P3RE] Event Dialog"),
 			LOCTEXT("AddEvtDialogueTrackTooltip_ObjectBinding", "[Persona 3 Reload] Add a track to trigger BMD message entries"),
 			FSlateIcon(),
 			FUIAction(

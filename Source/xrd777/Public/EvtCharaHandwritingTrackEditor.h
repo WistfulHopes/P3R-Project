@@ -7,6 +7,8 @@
 #include "CoreMinimal.h"
 #include <Sequencer/Public/MovieSceneTrackEditor.h>
 #include <xrd777/Public/MovieSceneEvtCharaHandwritingTrack.h>
+#include <xrd777/Public/MovieSceneEvtCharaHandwritingSection.h>
+#include <xrd777/Public/MovieSceneEvtCharaHandwritingSectionTemplate.h>
 
 class XRD777_API FEvtCharaHandwritingTrackEditor
 	: public FMovieSceneTrackEditor
@@ -30,13 +32,15 @@ public:
 	// ISequencerTrackEditor interface
 
 	//virtual TSharedRef<ISequencerSection> MakeSectionInterface(UMovieSceneSection& SectionObject, UMovieSceneTrack& Track, FGuid ObjectBinding) override;
-	virtual void BuildAddTrackMenu(FMenuBuilder& MenuBuilder) override;
+	//virtual void BuildAddTrackMenu(FMenuBuilder& MenuBuilder) override;
+	virtual FMovieSceneEvalTemplatePtr CreateTemplateForSection(const UMovieSceneSection& InSection) const;
+	virtual void BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilder, const TArray<FGuid>& ObjectBindings, const UClass* ObjectClass) override;
 	virtual bool SupportsSequence(UMovieSceneSequence* InSequence) const override;
 	virtual bool SupportsType(TSubclassOf<UMovieSceneTrack> Type) const override;
 	virtual const FSlateBrush* GetIconBrush() const override;
 
 private:
-	void HandleAddEvtCharaHandwritingTrackMenuEntryExecute();
+	void HandleAddEvtCharaHandwritingTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);
 	bool HandleAddEvtCharaHandwritingTrackMenuEntryCanExecute() const;
 };
 

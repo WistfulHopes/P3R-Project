@@ -86,7 +86,7 @@ void FEvtScriptTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilde
 	}
 	if (bIsAtlusEventManager) {
 		MenuBuilder.AddMenuEntry(
-			LOCTEXT("AddEvtDialogueTrack_ObjectBinding", "Event Script"),
+			LOCTEXT("AddEvtDialogueTrack_ObjectBinding", "[P3RE] Event Script"),
 			LOCTEXT("AddEvtDialogueTrackTooltip_ObjectBinding", "[Persona 3 Reload] Call flowscript procedures"),
 			FSlateIcon(),
 			FUIAction(

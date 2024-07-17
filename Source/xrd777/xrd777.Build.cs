@@ -57,6 +57,7 @@ public class xrd777 : ModuleRules {
             "SprAssetPlugin",
             "StaticMeshDescription",
             "TemplateSequence",
+            "ToolMenus",
             "UMG",
             "UimAssetPlugin",
         });
@@ -66,10 +67,21 @@ public class xrd777 : ModuleRules {
             PublicDependencyModuleNames.AddRange(
                 new string[]
                 {
+                    "AssetRegistry",
+                    "AssetTools",
+                    "ContentBrowser",
                     "EditorStyle",
                     "MovieSceneTools",
+                    "PropertyEditor",
                     "Sequencer",
                     "UnrealEd"
+                }
+            );
+            PrivateDependencyModuleNames.AddRange(
+                new string[] 
+                {
+                    "Slate", 
+                    "SlateCore" 
                 }
             );
         }

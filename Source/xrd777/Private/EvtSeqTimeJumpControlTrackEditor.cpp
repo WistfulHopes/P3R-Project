@@ -6,6 +6,9 @@
 #pragma once
 
 #include "EvtSeqTimeJumpControlTrackEditor.h"
+#include <xrd777/Public/MovieSceneEvtSeqTimeJumpControllerSection.h>
+#include <xrd777/Public/MovieSceneEvtSeqTimeJumpControllerSectionTemplate.h>
+#include "EvtConditionBranchDetailsCustom.h"
 
 #define LOCTEXT_NAMESPACE "FEvtSeqTimeJumpControlTrackEditor"
 
@@ -18,7 +21,10 @@ TSharedRef<ISequencerTrackEditor> FEvtSeqTimeJumpControlTrackEditor::CreateTrack
 FEvtSeqTimeJumpControlTrackEditor::FEvtSeqTimeJumpControlTrackEditor(TSharedRef<ISequencer> InSequencer)
 	: FMovieSceneTrackEditor(InSequencer) {}
 // Methods
-
+FMovieSceneEvalTemplatePtr FEvtSeqTimeJumpControlTrackEditor::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtSeqTimeJumpControllerSectionTemplate(*CastChecked<UMovieSceneEvtSeqTimeJumpControllerSection>(&InSection));
+}
+/*
 void FEvtSeqTimeJumpControlTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder) {
 	MenuBuilder.AddMenuEntry(
 		LOCTEXT("AddEvtSeqTimeJumpControlTrack", "Atlus Event Sequence Time Jump Control Track"),
@@ -29,6 +35,34 @@ void FEvtSeqTimeJumpControlTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuil
 			FCanExecuteAction::CreateRaw(this, &FEvtSeqTimeJumpControlTrackEditor::HandleAddEvtSeqTimeJumpControlTrackMenuEntryCanExecute)
 		)
 	);
+}
+*/
+
+void FEvtSeqTimeJumpControlTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilder, const TArray<FGuid>& ObjectBindings, const UClass* ObjectClass) {
+	FString AtlEventManagerName = FString(TEXT("BP_AtlEvtEventManager_C"));
+	TArray<FGuid> AtlusEventManager = TArray<FGuid>();
+	bool bIsAtlusEventManager = false;
+	// check object binding list
+	for (const FGuid Binding : ObjectBindings) {
+		if (Binding.IsValid()) {
+			UObject* BindingObject = GetSequencer()->FindSpawnedObjectOrTemplate(Binding);
+			if (BindingObject != nullptr && BindingObject->GetClass()->GetName().Equals(AtlEventManagerName)) {
+				bIsAtlusEventManager = true;
+				AtlusEventManager.Add(Binding);
+			}
+		}
+	}
+	if (bIsAtlusEventManager) {
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("AddEvtDialogueTrack_ObjectBinding", "[P3RE] Evt Time Jump Controller"),
+			LOCTEXT("AddEvtDialogueTrackTooltip_ObjectBinding", "[Persona 3 Reload] TODO: Description"),
+			FSlateIcon(),
+			FUIAction(
+				FExecuteAction::CreateRaw(this, &FEvtSeqTimeJumpControlTrackEditor::HandleAddEvtSeqTimeJumpControlTrackMenuEntryExecute, AtlusEventManager),
+				FCanExecuteAction::CreateRaw(this, &FEvtSeqTimeJumpControlTrackEditor::HandleAddEvtSeqTimeJumpControlTrackMenuEntryCanExecute)
+			)
+		);
+	}
 }
 
 bool FEvtSeqTimeJumpControlTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const {
@@ -45,7 +79,7 @@ const FSlateBrush* FEvtSeqTimeJumpControlTrackEditor::GetIconBrush() const
 }
 
 // Callbacks
-
+/*
 void FEvtSeqTimeJumpControlTrackEditor::HandleAddEvtSeqTimeJumpControlTrackMenuEntryExecute() {
 	UMovieScene* MovieScene = GetFocusedMovieScene();
 	if (MovieScene == nullptr || MovieScene->IsReadOnly()) {
@@ -64,6 +98,32 @@ void FEvtSeqTimeJumpControlTrackEditor::HandleAddEvtSeqTimeJumpControlTrackMenuE
 	SoundFadeTrack->AddSection(*NewSection);
 	if (GetSequencer().IsValid()) {
 		GetSequencer()->OnAddTrack(SoundFadeTrack, FGuid());
+	}
+}
+*/
+
+void FEvtSeqTimeJumpControlTrackEditor::HandleAddEvtSeqTimeJumpControlTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds) {
+	UMovieScene* MovieScene = GetFocusedMovieScene();
+	if (MovieScene == nullptr || MovieScene->IsReadOnly()) {
+		return;
+	}
+	const FScopedTransaction Transaction(LOCTEXT("AddEvtAdxSoundManageTrack_Transaction", "P3RE Event ADX Sound Manage Track"));
+	MovieScene->Modify();
+	TArray<UMovieSceneEvtSeqTimeJumpControllerTrack*> NewTracks;
+	for (FGuid InObjectBindingId : InObjectBindingIds) {
+		UMovieSceneEvtSeqTimeJumpControllerTrack* NewObjectTrack = MovieScene->AddTrack<UMovieSceneEvtSeqTimeJumpControllerTrack>(InObjectBindingId);
+		NewTracks.Add(NewObjectTrack);
+		if (GetSequencer().IsValid()) {
+			UMovieSceneSection* NewDialogSection = NewObjectTrack->CreateNewSection();
+			check(NewDialogSection);
+			NewObjectTrack->AddSection(*NewDialogSection);
+			GetSequencer()->OnAddTrack(NewObjectTrack, InObjectBindingId);
+		}
+	}
+
+	check(NewTracks.Num() != 0);
+	for (UMovieSceneEvtSeqTimeJumpControllerTrack* NewTrack : NewTracks) {
+		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Time Jump Controller"));
 	}
 }
 

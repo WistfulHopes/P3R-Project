@@ -6,6 +6,7 @@
 #pragma once
 
 #include "EvtFieldAnimTrackEditor.h"
+#include <xrd777/Public/FldAnimObj.h>
 
 #define LOCTEXT_NAMESPACE "FEvtFieldAnimTrackEditor"
 
@@ -19,16 +20,35 @@ FEvtFieldAnimTrackEditor::FEvtFieldAnimTrackEditor(TSharedRef<ISequencer> InSequ
 	: FMovieSceneTrackEditor(InSequencer) {}
 // Methods
 
-void FEvtFieldAnimTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder) {
-	MenuBuilder.AddMenuEntry(
-		LOCTEXT("AddEvtFieldAnimTrack", "Atlus Event Field Animation Track"),
-		LOCTEXT("AddEvtFieldAnimTrackTooltip", "TODO: Description"),
-		FSlateIcon(FEditorStyle::GetStyleSetName(), "Sequencer.Tracks.Audio"),
-		FUIAction(
-			FExecuteAction::CreateRaw(this, &FEvtFieldAnimTrackEditor::HandleAddEvtFieldAnimTrackMenuEntryExecute),
-			FCanExecuteAction::CreateRaw(this, &FEvtFieldAnimTrackEditor::HandleAddEvtFieldAnimTrackMenuEntryCanExecute)
-		)
-	);
+FMovieSceneEvalTemplatePtr FEvtFieldAnimTrackEditor::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtFieldAnimationSectionTemplate(*CastChecked<UMovieSceneEvtFieldAnimationSection>(&InSection));
+}
+
+void FEvtFieldAnimTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilder, const TArray<FGuid>& ObjectBindings, const UClass* ObjectClass) {
+	// only add this option for characters
+	TArray<FGuid> EvtCharacters = TArray<FGuid>();
+	bool bIsEvtCharacter = false;
+	// check object binding list
+	for (const FGuid Binding : ObjectBindings) {
+		if (Binding.IsValid()) {
+			UObject* BindingObject = GetSequencer()->FindSpawnedObjectOrTemplate(Binding);
+			if (BindingObject != nullptr && BindingObject->IsA(AFldAnimObj::StaticClass())) {
+				bIsEvtCharacter = true;
+				EvtCharacters.Add(Binding);
+			}
+		}
+	}
+	if (bIsEvtCharacter) {
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("AddEvtDialogueTrack_ObjectBinding", "[P3RE] Filed Anim"),
+			LOCTEXT("AddEvtDialogueTrackTooltip_ObjectBinding", "[Persona 3 Reload] Add a track to play field animations"),
+			FSlateIcon(),
+			FUIAction(
+				FExecuteAction::CreateRaw(this, &FEvtFieldAnimTrackEditor::HandleAddEvtFieldAnimTrackMenuEntryExecute, EvtCharacters),
+				FCanExecuteAction::CreateRaw(this, &FEvtFieldAnimTrackEditor::HandleAddEvtFieldAnimTrackMenuEntryCanExecute)
+			)
+		);
+	}
 }
 
 bool FEvtFieldAnimTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const {
@@ -46,32 +66,35 @@ const FSlateBrush* FEvtFieldAnimTrackEditor::GetIconBrush() const
 
 // Callbacks
 
-void FEvtFieldAnimTrackEditor::HandleAddEvtFieldAnimTrackMenuEntryExecute() {
+void FEvtFieldAnimTrackEditor::HandleAddEvtFieldAnimTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds) {
 	UMovieScene* MovieScene = GetFocusedMovieScene();
 	if (MovieScene == nullptr || MovieScene->IsReadOnly()) {
 		return;
 	}
-	UMovieSceneTrack* SoundFadeTrack = MovieScene->FindMasterTrack<UMovieSceneEvtFieldAnimationTrack>();
-	if (SoundFadeTrack != nullptr) {
-		return;
-	}
 	const FScopedTransaction Transaction(LOCTEXT("AddEvtAdxSoundManageTrack_Transaction", "P3RE Event ADX Sound Manage Track"));
 	MovieScene->Modify();
-	SoundFadeTrack = FindOrCreateMasterTrack<UMovieSceneEvtFieldAnimationTrack>().Track;
-	check(SoundFadeTrack);
-	UMovieSceneSection* NewSection = SoundFadeTrack->CreateNewSection();
-	check(NewSection);
-	SoundFadeTrack->AddSection(*NewSection);
-	if (GetSequencer().IsValid()) {
-		GetSequencer()->OnAddTrack(SoundFadeTrack, FGuid());
+	TArray<UMovieSceneEvtFieldAnimationTrack*> NewTracks;
+	for (FGuid InObjectBindingId : InObjectBindingIds) {
+		UMovieSceneEvtFieldAnimationTrack* NewTrack = MovieScene->AddTrack<UMovieSceneEvtFieldAnimationTrack>(InObjectBindingId);
+		NewTracks.Add(NewTrack);
+		if (GetSequencer().IsValid()) {
+			UMovieSceneSection* NewDialogSection = NewTrack->CreateNewSection();
+			check(NewDialogSection);
+			NewTrack->AddSection(*NewDialogSection);
+			GetSequencer()->OnAddTrack(NewTrack, InObjectBindingId);
+		}
+	}
+
+	check(NewTracks.Num() != 0);
+	for (UMovieSceneEvtFieldAnimationTrack* NewTrack : NewTracks) {
+		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Field Anim"));
 	}
 }
 
 bool FEvtFieldAnimTrackEditor::HandleAddEvtFieldAnimTrackMenuEntryCanExecute() const
 {
 	UMovieScene* FocusedMovieScene = GetFocusedMovieScene();
-
-	return ((FocusedMovieScene != nullptr) && (FocusedMovieScene->FindMasterTrack<UMovieSceneEvtFieldAnimationTrack>() == nullptr));
+	return FocusedMovieScene != nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE

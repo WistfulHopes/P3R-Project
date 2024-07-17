@@ -18,17 +18,37 @@ TSharedRef<ISequencerTrackEditor> FEvtDialogueOptionsTrackEditor::CreateTrackEdi
 FEvtDialogueOptionsTrackEditor::FEvtDialogueOptionsTrackEditor(TSharedRef<ISequencer> InSequencer)
 	: FMovieSceneTrackEditor(InSequencer) {}
 // Methods
+FMovieSceneEvalTemplatePtr FEvtDialogueOptionsTrackEditor::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtDialogueOptionsSectionTemplate(*CastChecked<UMovieSceneEvtDialogueOptionsSection>(&InSection));
+}
 
-void FEvtDialogueOptionsTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder) {
-	MenuBuilder.AddMenuEntry(
-		LOCTEXT("AddEvtDialgoueOptionsTrack", "Atlus Event Dialogue Options Track"),
-		LOCTEXT("AddEvtDialgoueOptionsTrackTooltip", "TODO: Description"),
-		FSlateIcon(FEditorStyle::GetStyleSetName(), "Sequencer.Tracks.Audio"),
-		FUIAction(
-			FExecuteAction::CreateRaw(this, &FEvtDialogueOptionsTrackEditor::HandleAddEvtDialogueOptionsTrackMenuEntryExecute),
-			FCanExecuteAction::CreateRaw(this, &FEvtDialogueOptionsTrackEditor::HandleAddEvtDialogueOptionsTrackMenuEntryCanExecute)
-		)
-	);
+void FEvtDialogueOptionsTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilder, const TArray<FGuid>& ObjectBindings, const UClass* ObjectClass) {
+	// only add this option for characters
+	FString AtlEventManagerName = FString(TEXT("BP_AtlEvtEventManager_C"));
+	TArray<FGuid> AtlusEventManager = TArray<FGuid>();
+	//bool bIsAtlusEventManager = ObjectClass->GetName().Equals(AtlEventManagerName);
+	bool bIsAtlusEventManager = false;
+	// check object binding list
+	for (const FGuid Binding : ObjectBindings) {
+		if (Binding.IsValid()) {
+			UObject* BindingObject = GetSequencer()->FindSpawnedObjectOrTemplate(Binding);
+			if (BindingObject != nullptr && BindingObject->GetClass()->GetName().Equals(AtlEventManagerName)) {
+				bIsAtlusEventManager = true;
+				AtlusEventManager.Add(Binding);
+			}
+		}
+	}
+	if (bIsAtlusEventManager) {
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("AddEvtDialogueTrack_ObjectBinding", "[P3RE] Event Dialog Options"),
+			LOCTEXT("AddEvtDialogueTrackTooltip_ObjectBinding", "[Persona 3 Reload] Add a track to trigger BMD message entries"),
+			FSlateIcon(),
+			FUIAction(
+				FExecuteAction::CreateRaw(this, &FEvtDialogueOptionsTrackEditor::HandleAddEvtDialogueOptionsTrackMenuEntryExecute, AtlusEventManager),
+				FCanExecuteAction::CreateRaw(this, &FEvtDialogueOptionsTrackEditor::HandleAddEvtDialogueOptionsTrackMenuEntryCanExecute)
+			)
+		);
+	}
 }
 
 bool FEvtDialogueOptionsTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const {
@@ -46,32 +66,35 @@ const FSlateBrush* FEvtDialogueOptionsTrackEditor::GetIconBrush() const
 
 // Callbacks
 
-void FEvtDialogueOptionsTrackEditor::HandleAddEvtDialogueOptionsTrackMenuEntryExecute() {
+void FEvtDialogueOptionsTrackEditor::HandleAddEvtDialogueOptionsTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds) {
 	UMovieScene* MovieScene = GetFocusedMovieScene();
 	if (MovieScene == nullptr || MovieScene->IsReadOnly()) {
 		return;
 	}
-	UMovieSceneTrack* SoundFadeTrack = MovieScene->FindMasterTrack<UMovieSceneEvtDialogueOptionsTrack>();
-	if (SoundFadeTrack != nullptr) {
-		return;
-	}
 	const FScopedTransaction Transaction(LOCTEXT("AddEvtAdxSoundManageTrack_Transaction", "P3RE Event ADX Sound Manage Track"));
 	MovieScene->Modify();
-	SoundFadeTrack = FindOrCreateMasterTrack<UMovieSceneEvtDialogueOptionsTrack>().Track;
-	check(SoundFadeTrack);
-	UMovieSceneSection* NewSection = SoundFadeTrack->CreateNewSection();
-	check(NewSection);
-	SoundFadeTrack->AddSection(*NewSection);
-	if (GetSequencer().IsValid()) {
-		GetSequencer()->OnAddTrack(SoundFadeTrack, FGuid());
+	TArray<UMovieSceneEvtDialogueOptionsTrack*> NewTracks;
+	for (FGuid InObjectBindingId : InObjectBindingIds) {
+		UMovieSceneEvtDialogueOptionsTrack* NewTrack = MovieScene->AddTrack<UMovieSceneEvtDialogueOptionsTrack>(InObjectBindingId);
+		NewTracks.Add(NewTrack);
+		if (GetSequencer().IsValid()) {
+			UMovieSceneSection* NewSection = NewTrack->CreateNewSection();
+			check(NewSection);
+			NewTrack->AddSection(*NewSection);
+			GetSequencer()->OnAddTrack(NewTrack, InObjectBindingId);
+		}
+	}
+
+	check(NewTracks.Num() != 0);
+	for (UMovieSceneEvtDialogueOptionsTrack* NewTrack : NewTracks) {
+		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Dialogue Options"));
 	}
 }
 
 bool FEvtDialogueOptionsTrackEditor::HandleAddEvtDialogueOptionsTrackMenuEntryCanExecute() const
 {
 	UMovieScene* FocusedMovieScene = GetFocusedMovieScene();
-
-	return ((FocusedMovieScene != nullptr) && (FocusedMovieScene->FindMasterTrack<UMovieSceneEvtDialogueOptionsTrack>() == nullptr));
+	return FocusedMovieScene != nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE

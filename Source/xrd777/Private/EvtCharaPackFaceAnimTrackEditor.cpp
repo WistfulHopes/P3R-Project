@@ -6,6 +6,9 @@
 #pragma once
 
 #include "EvtCharaPackFaceAnimTrackEditor.h"
+#include <CharacterBase/Public/CharacterBaseCore.h>
+#include <CharacterBase/Public/NpcBaseCore.h>
+#include <Xrd777/Public/AppPropsCore.h>
 
 #define LOCTEXT_NAMESPACE "FEvtCharaPackFaceAnimTrackEditor"
 
@@ -18,17 +21,40 @@ TSharedRef<ISequencerTrackEditor> FEvtCharaPackFaceAnimTrackEditor::CreateTrackE
 FEvtCharaPackFaceAnimTrackEditor::FEvtCharaPackFaceAnimTrackEditor(TSharedRef<ISequencer> InSequencer)
 	: FMovieSceneTrackEditor(InSequencer) {}
 // Methods
+FMovieSceneEvalTemplatePtr FEvtCharaPackFaceAnimTrackEditor::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtCharaPackFaceAnimationSectionTemplate(*CastChecked<UMovieSceneEvtCharaPackFaceAnimationSection>(&InSection));
+}
 
-void FEvtCharaPackFaceAnimTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder) {
-	MenuBuilder.AddMenuEntry(
-		LOCTEXT("AddEvtCharaPackFaceAnimTrack", "Atlus Event Character Pack Face Anim Track"),
-		LOCTEXT("AddEvtCharaPackFaceAnimTrackTooltip", "TODO: Description"),
-		FSlateIcon(FEditorStyle::GetStyleSetName(), "Sequencer.Tracks.Audio"),
-		FUIAction(
-			FExecuteAction::CreateRaw(this, &FEvtCharaPackFaceAnimTrackEditor::HandleAddEvtCharaPackFaceAnimTrackMenuEntryExecute),
-			FCanExecuteAction::CreateRaw(this, &FEvtCharaPackFaceAnimTrackEditor::HandleAddEvtCharaPackFaceAnimTrackMenuEntryCanExecute)
-		)
-	);
+void FEvtCharaPackFaceAnimTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilder, const TArray<FGuid>& ObjectBindings, const UClass* ObjectClass) {
+	// only add this option for characters
+	TArray<FGuid> EvtCharacters = TArray<FGuid>();
+	bool bIsEvtCharacter = false;
+	// check object binding list
+	for (const FGuid Binding : ObjectBindings) {
+		if (Binding.IsValid()) {
+			UObject* BindingObject = GetSequencer()->FindSpawnedObjectOrTemplate(Binding);
+			if (BindingObject != nullptr &&
+				(
+					BindingObject->IsA(ACharacterBaseCore::StaticClass()) ||
+					BindingObject->IsA(ANpcBaseCore::StaticClass()) ||
+					BindingObject->IsA(AAppPropsCore::StaticClass())
+					)) {
+				bIsEvtCharacter = true;
+				EvtCharacters.Add(Binding);
+			}
+		}
+	}
+	if (bIsEvtCharacter) {
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("AddEvtDialogueTrack_ObjectBinding", "[P3RE] Character Pack Face Anim"),
+			LOCTEXT("AddEvtDialogueTrackTooltip_ObjectBinding", "[Persona 3 Reload] Add a track to attach a prop to a character"),
+			FSlateIcon(),
+			FUIAction(
+				FExecuteAction::CreateRaw(this, &FEvtCharaPackFaceAnimTrackEditor::HandleAddEvtCharaPackFaceAnimTrackMenuEntryExecute, EvtCharacters),
+				FCanExecuteAction::CreateRaw(this, &FEvtCharaPackFaceAnimTrackEditor::HandleAddEvtCharaPackFaceAnimTrackMenuEntryCanExecute)
+			)
+		);
+	}
 }
 
 bool FEvtCharaPackFaceAnimTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const {
@@ -46,32 +72,35 @@ const FSlateBrush* FEvtCharaPackFaceAnimTrackEditor::GetIconBrush() const
 
 // Callbacks
 
-void FEvtCharaPackFaceAnimTrackEditor::HandleAddEvtCharaPackFaceAnimTrackMenuEntryExecute() {
+void FEvtCharaPackFaceAnimTrackEditor::HandleAddEvtCharaPackFaceAnimTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds) {
 	UMovieScene* MovieScene = GetFocusedMovieScene();
 	if (MovieScene == nullptr || MovieScene->IsReadOnly()) {
 		return;
 	}
-	UMovieSceneTrack* SoundFadeTrack = MovieScene->FindMasterTrack<UMovieSceneEvtCharaPackFaceAnimationTrack>();
-	if (SoundFadeTrack != nullptr) {
-		return;
-	}
 	const FScopedTransaction Transaction(LOCTEXT("AddEvtAdxSoundManageTrack_Transaction", "P3RE Event ADX Sound Manage Track"));
 	MovieScene->Modify();
-	SoundFadeTrack = FindOrCreateMasterTrack<UMovieSceneEvtCharaPackFaceAnimationTrack>().Track;
-	check(SoundFadeTrack);
-	UMovieSceneSection* NewSection = SoundFadeTrack->CreateNewSection();
-	check(NewSection);
-	SoundFadeTrack->AddSection(*NewSection);
-	if (GetSequencer().IsValid()) {
-		GetSequencer()->OnAddTrack(SoundFadeTrack, FGuid());
+	TArray<UMovieSceneEvtCharaPackFaceAnimationTrack*> NewTracks;
+	for (FGuid InObjectBindingId : InObjectBindingIds) {
+		UMovieSceneEvtCharaPackFaceAnimationTrack* NewTrack = MovieScene->AddTrack<UMovieSceneEvtCharaPackFaceAnimationTrack>(InObjectBindingId);
+		NewTracks.Add(NewTrack);
+		if (GetSequencer().IsValid()) {
+			UMovieSceneSection* NewSection = NewTrack->CreateNewSection();
+			check(NewSection);
+			NewTrack->AddSection(*NewSection);
+			GetSequencer()->OnAddTrack(NewTrack, InObjectBindingId);
+		}
+	}
+
+	check(NewTracks.Num() != 0);
+	for (UMovieSceneEvtCharaPackFaceAnimationTrack* NewTrack : NewTracks) {
+		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Pack Face Anim"));
 	}
 }
 
 bool FEvtCharaPackFaceAnimTrackEditor::HandleAddEvtCharaPackFaceAnimTrackMenuEntryCanExecute() const
 {
 	UMovieScene* FocusedMovieScene = GetFocusedMovieScene();
-
-	return ((FocusedMovieScene != nullptr) && (FocusedMovieScene->FindMasterTrack<UMovieSceneEvtCharaPackFaceAnimationTrack>() == nullptr));
+	return FocusedMovieScene != nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE

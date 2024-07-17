@@ -7,6 +7,8 @@
 #include "CoreMinimal.h"
 #include <Sequencer/Public/MovieSceneTrackEditor.h>
 #include "Xrd777/Public/MovieSceneEvtCharaPropAttachTrack.h"
+#include "Xrd777/Public/MovieSceneEvtCharaPropAttachSection.h"
+#include "Xrd777/Public/MovieSceneEvtCharaPropAttachSectionTemplate.h"
 
 class XRD777_API FEvtCharaPropAttachTrackEditor
 	: public FMovieSceneTrackEditor
@@ -30,13 +32,14 @@ public:
 	// ISequencerTrackEditor interface
 
 	//virtual TSharedRef<ISequencerSection> MakeSectionInterface(UMovieSceneSection& SectionObject, UMovieSceneTrack& Track, FGuid ObjectBinding) override;
-	virtual void BuildAddTrackMenu(FMenuBuilder& MenuBuilder) override;
+	virtual FMovieSceneEvalTemplatePtr CreateTemplateForSection(const UMovieSceneSection& InSection) const;
+	virtual void BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilder, const TArray<FGuid>& ObjectBindings, const UClass* ObjectClass) override;
 	virtual bool SupportsSequence(UMovieSceneSequence* InSequence) const override;
 	virtual bool SupportsType(TSubclassOf<UMovieSceneTrack> Type) const override;
 	virtual const FSlateBrush* GetIconBrush() const override;
 
 private:
-	void HandleAddEvtCharaPropAttachTrackMenuEntryExecute();
+	void HandleAddEvtCharaPropAttachTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);
 	bool HandleAddEvtCharaPropAttachTrackMenuEntryCanExecute() const;
 };
 

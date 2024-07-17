@@ -6,6 +6,8 @@
 #pragma once
 
 #include "EvtSeqControlTrackEditor.h"
+#include <xrd777/Public/MovieSceneEvtSeqControllerSection.h>
+#include <xrd777/Public/MovieSceneEvtSeqControllerSectionTemplate.h>
 
 #define LOCTEXT_NAMESPACE "FEvtSeqControlTrackEditor"
 
@@ -17,8 +19,40 @@ TSharedRef<ISequencerTrackEditor> FEvtSeqControlTrackEditor::CreateTrackEditor(T
 
 FEvtSeqControlTrackEditor::FEvtSeqControlTrackEditor(TSharedRef<ISequencer> InSequencer)
 	: FMovieSceneTrackEditor(InSequencer) {}
-// Methods
 
+FMovieSceneEvalTemplatePtr FEvtSeqControlTrackEditor::CreateTemplateForSection(const UMovieSceneSection& InSection) const {
+	return FMovieSceneEvtSeqControllerSectionTemplate(*CastChecked<UMovieSceneEvtSeqControllerSection>(&InSection));
+}
+
+void FEvtSeqControlTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilder, const TArray<FGuid>& ObjectBindings, const UClass* ObjectClass) {
+	FString AtlEventManagerName = FString(TEXT("BP_AtlEvtEventManager_C"));
+	TArray<FGuid> AtlusEventManager = TArray<FGuid>();
+	bool bIsAtlusEventManager = false;
+	// check object binding list
+	for (const FGuid Binding : ObjectBindings) {
+		if (Binding.IsValid()) {
+			UObject* BindingObject = GetSequencer()->FindSpawnedObjectOrTemplate(Binding);
+			if (BindingObject != nullptr && BindingObject->GetClass()->GetName().Equals(AtlEventManagerName)) {
+				bIsAtlusEventManager = true;
+				AtlusEventManager.Add(Binding);
+			}
+		}
+	}
+	if (bIsAtlusEventManager) {
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("AddEvtDialogueTrack_ObjectBinding", "[P3RE] Evt Sequence Controller"),
+			LOCTEXT("AddEvtDialogueTrackTooltip_ObjectBinding", "[Persona 3 Reload] TODO: Description"),
+			FSlateIcon(),
+			FUIAction(
+				FExecuteAction::CreateRaw(this, &FEvtSeqControlTrackEditor::HandleAddEvtSeqControlTrackMenuEntryExecute, AtlusEventManager),
+				FCanExecuteAction::CreateRaw(this, &FEvtSeqControlTrackEditor::HandleAddEvtSeqControlTrackMenuEntryCanExecute)
+			)
+		);
+	}
+}
+
+// Methods
+/*
 void FEvtSeqControlTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder) {
 	MenuBuilder.AddMenuEntry(
 		LOCTEXT("AddEvtSeqControlTrack", "Atlus Event Sequence Control Track"),
@@ -30,7 +64,7 @@ void FEvtSeqControlTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder) {
 		)
 	);
 }
-
+*/
 bool FEvtSeqControlTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const {
 	return true;
 }
@@ -46,24 +80,28 @@ const FSlateBrush* FEvtSeqControlTrackEditor::GetIconBrush() const
 
 // Callbacks
 
-void FEvtSeqControlTrackEditor::HandleAddEvtSeqControlTrackMenuEntryExecute() {
+void FEvtSeqControlTrackEditor::HandleAddEvtSeqControlTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds) {
 	UMovieScene* MovieScene = GetFocusedMovieScene();
 	if (MovieScene == nullptr || MovieScene->IsReadOnly()) {
 		return;
 	}
-	UMovieSceneTrack* SoundFadeTrack = MovieScene->FindMasterTrack<UMovieSceneEvtSeqControllerTrack>();
-	if (SoundFadeTrack != nullptr) {
-		return;
-	}
 	const FScopedTransaction Transaction(LOCTEXT("AddEvtAdxSoundManageTrack_Transaction", "P3RE Event ADX Sound Manage Track"));
 	MovieScene->Modify();
-	SoundFadeTrack = FindOrCreateMasterTrack<UMovieSceneEvtSeqControllerTrack>().Track;
-	check(SoundFadeTrack);
-	UMovieSceneSection* NewSection = SoundFadeTrack->CreateNewSection();
-	check(NewSection);
-	SoundFadeTrack->AddSection(*NewSection);
-	if (GetSequencer().IsValid()) {
-		GetSequencer()->OnAddTrack(SoundFadeTrack, FGuid());
+	TArray<UMovieSceneEvtSeqControllerTrack*> NewTracks;
+	for (FGuid InObjectBindingId : InObjectBindingIds) {
+		UMovieSceneEvtSeqControllerTrack* NewObjectTrack = MovieScene->AddTrack<UMovieSceneEvtSeqControllerTrack>(InObjectBindingId);
+		NewTracks.Add(NewObjectTrack);
+		if (GetSequencer().IsValid()) {
+			UMovieSceneSection* NewDialogSection = NewObjectTrack->CreateNewSection();
+			check(NewDialogSection);
+			NewObjectTrack->AddSection(*NewDialogSection);
+			GetSequencer()->OnAddTrack(NewObjectTrack, InObjectBindingId);
+		}
+	}
+
+	check(NewTracks.Num() != 0);
+	for (UMovieSceneEvtSeqControllerTrack* NewTrack : NewTracks) {
+		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Sequence Controller"));
 	}
 }
 
