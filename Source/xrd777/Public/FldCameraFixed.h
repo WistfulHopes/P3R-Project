@@ -9,7 +9,7 @@ UCLASS(Blueprintable)
 class XRD777_API AFldCameraFixed : public AFldCameraBase {
     GENERATED_BODY()
 public:
-private:
+//private:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Instanced, meta=(AllowPrivateAccess=true))
     UFldCameraBehaviorFixed* Behavior;
     

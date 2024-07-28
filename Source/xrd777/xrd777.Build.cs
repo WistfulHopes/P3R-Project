@@ -69,8 +69,12 @@ public class xrd777 : ModuleRules {
                 {
                     "AssetRegistry",
                     "AssetTools",
+                    "BlueprintGraph",
                     "ContentBrowser",
+                    "ContentBrowserData",
                     "EditorStyle",
+                    "Kismet",
+                    "LevelEditor",
                     "MovieSceneTools",
                     "PropertyEditor",
                     "Sequencer",

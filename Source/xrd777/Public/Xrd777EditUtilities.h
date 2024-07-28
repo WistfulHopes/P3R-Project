@@ -1,5 +1,7 @@
 // (C)ATLUS. (C)SEGA.
 
+#if WITH_EDITORONLY_DATA
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -91,10 +93,16 @@ public:
 	void MakeIntoOSPath(FString& InPath, bool bIsDirectory);
 	void MakeIntoOSPath(FString& InPath);
 	void MakeIntoUnrealPath(FString& InPath);
+	FString GetUnrealPathFromOSPath(const FString& OSPath);
 	// CHARACTER
 	FString GetProjectPathForCharacterId(int32 CharaId);
 	FString GetCharaIdDirectoryName(int32 CharaId);
 	FString GetCharaIdFileName(int32 CharaId);
+	FString GetSkeletalMeshWildcard(int32 CharaId);
+	FString GetAnimSequenceWildcard(int32 CharaId);
+	USkeleton* GetTargetSkeleton(int32 CharaId);
+	TArray<FString> GetListOfGameUnimportedSkeletalMeshes(int32 CharaId);
+	TArray<FString> GetListOfGameUnimportedAnimSequences(int32 CharaId);
 	// EVENT
 	FString GetProjectPathForEvent(const FXrd777EditEventParams& EvtParams);
 	//FString GetEventFilenameFromId(const FXrd777EditEventParams& EvtParams); // moved to FXrd777EditEventParams->ToString
@@ -121,3 +129,5 @@ public:
 
 	FXrd777EditUtilities() {}
 };
+
+#endif

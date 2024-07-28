@@ -1,5 +1,5 @@
 // (C)ATLUS. (C)SEGA.
-
+#if WITH_EDITORONLY_DATA
 
 #include "Xrd777EditAssetListWidget.h"
 #include "IAssetRegistry.h"
@@ -189,3 +189,4 @@ void SXrd777EditAssetListWidget::UpdateAssetList(FString& InGamePath, FString& I
 }
 
 #undef LOCTEXT_NAMESPACE
+#endif

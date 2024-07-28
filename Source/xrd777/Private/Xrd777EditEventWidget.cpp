@@ -1,5 +1,7 @@
 // (C)ATLUS. (C)SEGA.
 
+#if WITH_EDITORONLY_DATA
+
 #include "Xrd777EditEventWidget.h"
 #include "CoreUObject/Public/UObject/UObjectGlobals.h"
 #include "UObject/ReflectedTypeAccessors.h"
@@ -308,6 +310,7 @@ void SXrd777EditEventWidget::Construct(const FArguments& InArgs) {
 	Data = InArgs._Data;
 	SetEventPath = InArgs._OnSetEventPath;
 	CreateAssetsTest = InArgs._OnCreateAssetsTest;
+	MakeDummyAnimTest = InArgs._OnMakeDummyAnimTest;
 
 	UEnum* EvtRank = StaticEnum<EEventManagerEventRank>();
 	for (int32 i = 0; i < EvtRank->NumEnums() - 1; i++) {
@@ -359,8 +362,23 @@ void SXrd777EditEventWidget::Construct(const FArguments& InArgs) {
 									return FReply::Handled();
 								})
 						]
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						.Padding(FMargin(8, 0, 0, 0))
+						.HAlign(HAlign_Fill)
+						.VAlign(VAlign_Center)
+						[
+							SNew(SButton)
+								.Text(LOCTEXT("Xrd777EditEventScriptMakeDummyAnims", "Make Dummy Anims TEST"))
+								.OnClicked_Lambda([this]() {
+									MakeDummyAnimTest.Execute(1);
+									return FReply::Handled();
+								})
+
+						]
 				]
 		];
 }
 
 #undef LOCTEXT_NAMESPACE
+#endif

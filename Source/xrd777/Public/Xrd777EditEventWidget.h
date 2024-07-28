@@ -1,4 +1,5 @@
 // (C)ATLUS. (C)SEGA.
+#if WITH_EDITORONLY_DATA
 
 #pragma once
 
@@ -42,6 +43,7 @@ public:
 };
 
 DECLARE_DELEGATE(FSetEventPath)
+DECLARE_DELEGATE_OneParam(FCreateDummyCharacterAsset, int32)
 DECLARE_DELEGATE_OneParam(FCreateAssetsTest, const FXrd777EditEventParams&)
 
 class SXrd777EditEventWidget : public SCompoundWidget
@@ -51,6 +53,7 @@ public:
 		SLATE_ARGUMENT(FXrd777EditEventDataNew*, Data)
 		SLATE_EVENT(FCreateAssetsTest, OnCreateAssetsTest)
 		SLATE_EVENT(FSetEventPath, OnSetEventPath)
+		SLATE_EVENT(FCreateDummyCharacterAsset, OnMakeDummyAnimTest)
 	SLATE_END_ARGS()
 private:
 	FXrd777EditEventDataNew* Data;
@@ -61,13 +64,15 @@ private:
 	
 	FSetEventPath SetEventPath;
 	FCreateAssetsTest CreateAssetsTest;
+
+	FCreateDummyCharacterAsset MakeDummyAnimTest;
 public:
 	void Construct(const FArguments& In);
 private:
 	TSharedRef<SWidget> DrawLoadedEventData();
 	TSharedPtr<SBox> ContentsBox;
 	TSharedRef<SWidget> DrawLoadNewEvent();
-	//void LoadEventDialog();
+	void LoadEventDialog();
 	void SearchSetCategory(EAtlEvtEventCategoryType InCategory) {
 		Data->Search->Category = InCategory;
 	}
@@ -87,3 +92,5 @@ private:
 public:
 	FText GetCurrentEventPath();
 };
+
+#endif

@@ -10,7 +10,7 @@ UCLASS(Blueprintable)
 class XRD777_API AFldCameraHitBox : public AFldCameraHitBase {
     GENERATED_BODY()
 public:
-protected:
+//protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Instanced, meta=(AllowPrivateAccess=true))
     UBoxComponent* Box;
     

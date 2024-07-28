@@ -11,11 +11,11 @@ UCLASS(Abstract, Blueprintable, ClassGroup=Custom, meta=(BlueprintSpawnableCompo
 class XRD777_API UFldCameraBehaviorBase : public UActorComponent {
     GENERATED_BODY()
 public:
-private:
+//private:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     AFldCameraBase* BaseOwner;
     
-protected:
+//protected:
     UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
     EFldCameraForwardType ForwardType;
     

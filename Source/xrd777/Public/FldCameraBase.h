@@ -13,7 +13,7 @@ UCLASS(Blueprintable)
 class XRD777_API AFldCameraBase : public AActor {
     GENERATED_BODY()
 public:
-protected:
+//protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Instanced, meta=(AllowPrivateAccess=true))
     USceneComponent* YawSceneComp;
     

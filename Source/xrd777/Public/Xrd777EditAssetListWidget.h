@@ -1,4 +1,5 @@
 // (C)ATLUS. (C)SEGA.
+#if WITH_EDITORONLY_DATA
 
 #pragma once
 
@@ -72,3 +73,4 @@ private:
 public:
 	void UpdateAssetList(FString& InGamePath, FString& InPath, FString& InWildcard, IAssetRegistry& InAssetRegistry);
 };
+#endif

@@ -1,5 +1,7 @@
 // (C)ATLUS. (C)SEGA.
 
+#if WITH_EDITORONLY_DATA
+
 
 #include "Xrd777EditUtilities.h"
 
@@ -45,11 +47,17 @@ void FXrd777EditUtilities::MakeIntoUnrealPath(FString& InPath) {
 	InPath += "." + FPaths::GetBaseFilename(InPath);
 }
 
+FString FXrd777EditUtilities::GetUnrealPathFromOSPath(const FString& OSPath) {
+	const UXrd777EditSettings* Settings = GetDefault<UXrd777EditSettings>();
+	FString PathOut = OSPath.RightChop(Settings->ExtractedAssetsDirectory.Path.Len());
+	return FPaths::ChangeExtension(PathOut, FPaths::GetBaseFilename(PathOut));
+}
+
 // CHARACTER
 // ================================================
 
 FString FXrd777EditUtilities::GetProjectPathForCharacterId(int32 CharaId) {
-	FString PathOut = GetInternationalFilePath(TEXT("Characters/"));
+	FString PathOut = GetInternationalFilePath(TEXT("Characters"));
 	if (CharaId < 100) {
 		PathOut += "/Player/";
 	}
@@ -85,6 +93,69 @@ FString FXrd777EditUtilities::GetCharaIdFileName(int32 CharaId) {
 	else {
 		return TEXT("NC") + FString::Printf(TEXT("%04d"), CharaId);
 	}
+}
+
+FString FXrd777EditUtilities::GetSkeletalMeshWildcard(int32 CharaId) {
+	return TEXT("SK_") + GetCharaIdFileName(CharaId) + TEXT("_*.uasset");
+}
+
+FString FXrd777EditUtilities::GetAnimSequenceWildcard(int32 CharaId) {
+	return TEXT("A_") + GetCharaIdFileName(CharaId) + TEXT("_*.uasset");
+}
+
+USkeleton* FXrd777EditUtilities::GetTargetSkeleton(int32 CharaId) {
+	//FAssetRegistryModule& AssetRegistryModule = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FString SkelPath;
+	if (CharaId == 9) { // Koromaru
+		SkelPath = TEXT("/CharacterBase/Animal/Blueprints/Animation/SKEL_Animal.SKEL_Animal");
+	}
+	else { // Everyone else is human
+		SkelPath = TEXT("/CharacterBase/Human/Blueprints/Animation/SKEL_Human.SKEL_Human");
+	}
+	return Cast<USkeleton>(StaticFindObject(USkeleton::StaticClass(), nullptr, *SkelPath));
+	/*
+	FAssetData TargetSkeleton = AssetRegistryModule.Get().GetAssetByObjectPath(*SkelPath);
+	if (!TargetSkeleton.IsValid()) {
+		return nullptr;
+	}
+	return Cast<USkeleton>(TargetSkeleton.GetAsset());
+	*/
+}
+
+TArray<FString> FXrd777EditUtilities::GetListOfGameUnimportedSkeletalMeshes(int32 CharaId) {
+	TArray<FString> FilenamesOut;
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FString OSPathName = GetProjectPathForCharacterId(CharaId);
+	MakeIntoOSPath(OSPathName, true);
+	IFileManager::Get().FindFilesRecursive(FilenamesOut, *OSPathName, *GetSkeletalMeshWildcard(CharaId), true, false);
+	const UXrd777EditSettings* Settings = GetDefault<UXrd777EditSettings>();
+	TArray<FString> UnimportedFilenamesOut;
+	for (const FString& SKFile : FilenamesOut) {
+		FString ObjectPath = GetUnrealPathFromOSPath(SKFile);
+		FAssetData SKAsset = AssetRegistryModule.Get().GetAssetByObjectPath(*ObjectPath);
+		if (!SKAsset.IsValid()) {
+			UnimportedFilenamesOut.Add(ObjectPath);
+		}
+	}
+	return UnimportedFilenamesOut;
+}
+
+TArray<FString> FXrd777EditUtilities::GetListOfGameUnimportedAnimSequences(int32 CharaId) {
+	TArray<FString> FilenamesOut;
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FString OSPathName = GetProjectPathForCharacterId(CharaId);
+	MakeIntoOSPath(OSPathName, true);
+	IFileManager::Get().FindFilesRecursive(FilenamesOut, *OSPathName, *GetAnimSequenceWildcard(CharaId), true, false);
+	const UXrd777EditSettings* Settings = GetDefault<UXrd777EditSettings>();
+	TArray<FString> UnimportedFilenamesOut;
+	for (const FString& AFile : FilenamesOut) {
+		FString ObjectPath = GetUnrealPathFromOSPath(AFile);
+		FAssetData AAsset = AssetRegistryModule.Get().GetAssetByObjectPath(*ObjectPath);
+		if (!AAsset.IsValid()) {
+			UnimportedFilenamesOut.Add(ObjectPath);
+		}
+	}
+	return UnimportedFilenamesOut;
 }
 
 // EVENT
@@ -211,3 +282,5 @@ FString FXrd777EditUtilities::GetAudioSequenceFilenameForEvent(const FXrd777Edit
 ULevelSequence* FXrd777EditUtilities::GetAudioSequenceForEvent(const FXrd777EditEventParams& EvtParams) {
 	return GetAssetForEvent<ULevelSequence>(EvtParams, FGetFilePath::CreateRaw(this, &FXrd777EditUtilities::GetAudioSequenceFilenameForEvent));
 }
+
+#endif

@@ -18,4 +18,7 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category = "Assets")
 	FDirectoryPath AtlusScriptToolsDirectory;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Assets")
+	FDirectoryPath FModelExportDirectory;
 };
