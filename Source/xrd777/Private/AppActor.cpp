@@ -5,17 +5,11 @@ EAppPauseObjectFlag AAppActor::GetAppPauseFlags() const {
 }
 
 void AAppActor::EndPlay(const TEnumAsByte<EEndPlayReason::Type> EndPlayReason) {
+    Super::EndPlay(EndPlayReason);
 }
 
 void AAppActor::BeginPlay() {
-}
-
-UObject* AAppActor::AsUObject() {
-    return NULL;
-}
-
-AActor* AAppActor::AsAActor() {
-    return NULL;
+    Super::BeginPlay();
 }
 
 AAppActor::AAppActor() {

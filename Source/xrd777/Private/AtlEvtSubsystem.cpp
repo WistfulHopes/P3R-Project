@@ -93,11 +93,36 @@ AActor* UAtlEvtSubsystem::GetFirstAppEventCharacter(EAppCharCategoryType Charcte
 }
 
 uint32 UAtlEvtSubsystem::GetEvtPreDataHash(EAtlEvtEventCategoryType CategoryType, int32 EventMajorID, int32 EventMinorID) const {
-    return 0;
+    // https://github.com/rirurin/p3rpc.nativetypes/blob/6ef7013234b9599b78ec52ef55225f788602cc17/p3rpc.nativetypes.Interfaces/Xrd777.cs#L4456
+    uint32 uVar3 = EventMajorID - EventMinorID ^ (uint32)EventMinorID >> 0xd;
+    uint32 uVar1 = (uint32)(-0x61c88647 - uVar3) - (uint32)EventMinorID ^ uVar3 << 8;
+    uint32 uVar4 = (EventMinorID - uVar1) - uVar3 ^ uVar1 >> 0xd;
+    uVar3 = (uVar3 - uVar1) - uVar4 ^ uVar4 >> 0xc;
+    uVar1 = (uVar1 - uVar3) - uVar4 ^ uVar3 << 0x10;
+    uVar4 = (uVar4 - uVar1) - uVar3 ^ uVar1 >> 5;
+    uVar3 = (uVar3 - uVar1) - uVar4 ^ uVar4 >> 3;
+    uVar1 = (uVar1 - uVar3) - uVar4 ^ uVar3 << 10;
+    uVar1 = (uVar4 - uVar1) - uVar3 ^ uVar1 >> 0xf;
+    uint32 iVar2 = uVar1 - (uint32)CategoryType;
+    uVar3 = 0x9e3779b9 - uVar1 ^ iVar2 * 0x100;
+    uVar4 = ((uint32)CategoryType - uVar3) - iVar2 ^ uVar3 >> 0xd;
+    uVar1 = (iVar2 - uVar3) - uVar4 ^ uVar4 >> 0xc;
+    uVar3 = (uVar3 - uVar1) - uVar4 ^ uVar1 << 0x10;
+    uVar4 = (uVar4 - uVar3) - uVar1 ^ uVar3 >> 5;
+    uVar1 = (uVar1 - uVar3) - uVar4 ^ uVar4 >> 3;
+    uVar3 = (uVar3 - uVar1) - uVar4 ^ uVar1 << 10;
+    return (uVar4 - uVar3) - uVar1 ^ uVar3 >> 0xf;
 }
 
 FAtlEvtPreData UAtlEvtSubsystem::GetEvtPreData(EAtlEvtEventCategoryType CategoryType, int32 EventMajorID, int32 EventMinorID) const {
-    return FAtlEvtPreData{};
+    FAtlEvtPreData EvtPreData = FAtlEvtPreData();
+    const FAtlEvtPreData* FoundEvtPreData = EvtPreDataMap.Find(GetEvtPreDataHash(CategoryType, EventMajorID, EventMinorID));
+    if (FoundEvtPreData) {
+        EvtPreData = *FoundEvtPreData;
+    }
+//#if WITH_EDITORONLY_DATA
+//#endif
+    return EvtPreData;
 }
 
 EAtlEvtPlayMode UAtlEvtSubsystem::GetEventPlayMode() const {
@@ -133,6 +158,15 @@ bool UAtlEvtSubsystem::CallEvent_IsCompleteFieldLoadingSublevel() const {
 }
 
 void UAtlEvtSubsystem::CallEvent_InternalFinishedEvent(int32 Value) {
+    // 0x14ab65e30 (PERSONA3 RELOAD 1.0.0.0 Win64)
+    AppEvtCharactersMap.Empty();
+    AppEvtLipUniqueIDCharactersMap.Empty();
+    if (OnePicture) {
+        OnePicture->Destroy();
+        OnePicture = nullptr;
+    }
+    pLSAssetLoader = nullptr;
+    LevelSequenceObject = nullptr;
 }
 
 void UAtlEvtSubsystem::CallEvent_DecrementFieldLoadingCount() {
@@ -153,5 +187,20 @@ UAtlEvtSubsystem::UAtlEvtSubsystem() {
     this->AssetOverrideSubClass = NULL;
     this->BagActor = NULL;
     this->OnePicture = NULL;
+
+#if WITH_EDITORONLY_DATA
+    // UAtlEvtSubsystem::FillEvtPreDataMap
+    // 0x14aba71a0 (PERSONA3 RELOAD 1.0.0.0 Win64)
+    FString EvtPreDataPath = TEXT("/Game/Xrd777/Events/Data/DataAsset/EvtPreDataAsset.EvtPreDataAsset");
+    //EvtPreDataAsset = Cast<UAtlEvtPreDataAsset>(StaticFindObject(UAtlEvtPreDataAsset::StaticClass(), nullptr, *EvtPreDataPath));
+    FAssetRegistryModule& AssetRegistryModule = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+    FAssetData EvtPreDataAsset = AssetRegistryModule.Get().GetAssetByObjectPath(*EvtPreDataPath);
+    if (EvtPreDataAsset.IsValid()) {
+        for (FAtlEvtPreData& EventEntry : Cast<UAtlEvtPreDataAsset>(EvtPreDataAsset.GetAsset())->Data) {
+            uint32 EvtHash = GetEvtPreDataHash((EAtlEvtEventCategoryType)EventEntry.EventCategoryTypeID, EventEntry.EventMajorID, EventEntry.EventMinorID);
+            EvtPreDataMap.Add(EvtHash, EventEntry);
+        }
+    }
+#endif
 }
 

@@ -21,6 +21,15 @@
 #include "PlayEvtSeqencerDelegateDelegate.h"
 #include "PlayEvtSeqencerHighSpeedDelegateDelegate.h"
 #include "Templates/SubclassOf.h"
+#include "AtlEvtPreDataAsset.h"
+#include "AtlEvtOnePicture.h"
+
+#if WITH_EDITORONLY_DATA
+#include "Modules/ModuleManager.h"
+#include "AssetRegistryModule.h"
+#include "IAssetRegistry.h"
+#endif
+
 #include "AtlEvtSubsystem.generated.h"
 
 class AActor;

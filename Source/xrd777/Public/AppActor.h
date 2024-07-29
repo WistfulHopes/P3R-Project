@@ -40,10 +40,10 @@ public:
     void BeginPlay();
     
     UFUNCTION(BlueprintCallable)
-    UObject* AsUObject();
+    UObject* AsUObject() { return (UObject*)this; }
     
     UFUNCTION(BlueprintCallable)
-    AActor* AsAActor();
+    AActor* AsAActor() { return (AActor*)this; }
     
     
     // Fix for true pure virtual functions not being implemented
