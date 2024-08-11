@@ -16,7 +16,6 @@ struct FEvtFieldAnimationExecutionToken : IMovieSceneExecutionToken {
     {}
 
     virtual void Execute(const FMovieSceneContext& Context, const FMovieSceneEvaluationOperand& Operand, FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) override {
-
     }
 };
 

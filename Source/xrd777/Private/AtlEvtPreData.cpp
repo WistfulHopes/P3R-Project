@@ -1,9 +1,10 @@
 #include "AtlEvtPreData.h"
 
 FAtlEvtPreData::FAtlEvtPreData() {
-    this->EventMajorID = 0;
-    this->EventMinorID = 0;
-    this->EventCategoryTypeID = 0;
+    // See default constructor in UAtlEvtSubsystem::GetEvtPreData
+    this->EventMajorID = -1;
+    this->EventMinorID = -1;
+    this->EventCategoryTypeID = -1;
     this->bDisableAutoLoadFirstLightingScenarioLevel = false;
     this->bForceDisableUseCurrentTimeZone = false;
     this->ForcedCldTimeZoneValue = 0;

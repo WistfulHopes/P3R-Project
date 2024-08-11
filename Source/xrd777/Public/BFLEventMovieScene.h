@@ -8,6 +8,17 @@
 #include "EEvtCharaAnimationSlotType.h"
 #include "EEvtCharaAnimationType.h"
 #include "EEvtConditionalBranchCompType.h"
+
+#include "LevelSequence/Public/LevelSequenceActor.h"
+#include "AtlEvtEventManager.h"
+#include "EEvtCharaAnimationSlotType.h"
+#include "Engine/Classes/Animation/AnimMontage.h"
+#include "Engine/Classes/Animation/AnimInstance.h"
+#include "MovieScene/Public/MovieSceneObjectBindingID.h"
+
+#include "Engine/Classes/GameFramework/Character.h"
+#include "AnimNotify_PlayEvtMultiMontage.h"
+
 #include "BFLEventMovieScene.generated.h"
 
 class AActor;
@@ -101,6 +112,7 @@ public:
 protected:
     UFUNCTION(BlueprintCallable)
     static UAnimMontage* AddPlayEvtMultiMontageAnimNotify(int32 Index, UAnimMontage* NewMontage, const TArray<FAtlSlotMultiAnimationParam>& AnimAssets, FName SlotNodeName, EEvtCharaAnimationType EvtCharaAnimationType, float CurrentMontageBlendOut, float NextMontageBlendIn);
-    
+private:
+    static bool CheckMeshAndAnimSkeletonsAreEqual(USkeletalMesh* Mesh, UAnimSequenceBase* Asset);
 };
 

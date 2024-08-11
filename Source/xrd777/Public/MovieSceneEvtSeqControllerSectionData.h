@@ -9,7 +9,7 @@ USTRUCT(BlueprintType)
 struct XRD777_API FMovieSceneEvtSeqControllerSectionData : public FMovieSceneChannel {
     GENERATED_BODY()
 public:
-private:
+//private:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     TArray<FFrameNumber> Times;
     

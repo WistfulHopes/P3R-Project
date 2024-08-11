@@ -7,6 +7,9 @@
 #include "MovieSceneEvtConditionalBranchData.h"
 #include "MovieSceneEvtDialogueSection.h"
 #include "MovieSceneEvtDialogueSectionData.h"
+
+#include "BmdAssetPlugin/Public/BmdAsset.h"
+
 #include "MovieSceneEvtDialogueSectionTemplate.generated.h"
 
 USTRUCT(BlueprintType)

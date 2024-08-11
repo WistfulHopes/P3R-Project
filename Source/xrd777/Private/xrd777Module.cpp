@@ -101,6 +101,8 @@
 #include "xrd777/Public/FldCameraSpline.h"
 #include "xrd777/Public/FldCameraHitSpline.h"
 
+#include "UnrealEd/Public/ObjectTools.h"
+
 #define LOCTEXT_NAMESPACE "FXrd777Module"
 
 DEFINE_LOG_CATEGORY_STATIC(LogRiriModule, Log, All);
@@ -201,12 +203,32 @@ void FXrd777RiriModule::RegisterMenus() {
 			FToolMenuSection& LevelSection = InMenu->AddSection("Xrd777EditLevelFromJson", LOCTEXT("Xrd777EditLevelFromJson", "XRD777"));
 			LevelSection.AddMenuEntry(
 				"AddLevelFromJson",
-				LOCTEXT("Xrd777EditAddLevelFromJson", "[P3RE] Add Level from JSON"),
-				LOCTEXT("Xrd777EditAddLevelFromJsonTooltip", "TODO: Tooltip"),
+				LOCTEXT("Xrd777EditAddLevelFromJson", "Add Level from JSON"),
+				LOCTEXT("Xrd777EditAddLevelFromJsonTooltip", "Add a level into the project from an FModel JSON"),
 				//FSlateIcon(FEditorStyle::GetStyleSetName(), ),
 				FSlateIcon(),
 				FUIAction(
 					FExecuteAction::CreateLambda([this, DataContextObject]() { OnImportLevelFromJson(DataContextObject); })
+				)
+			);
+			LevelSection.AddMenuEntry(
+				"RemoveMeshNameFromAnim",
+				LOCTEXT("Xrd777EditAnimRenameLabel", "Remove mesh prefix from animation sequences"),
+				LOCTEXT("Xrd777EditAnimRenameTooltip", "If importing a BaseSkelton with several anims, remove the mesh name prefixed to each sequence"),
+				//FSlateIcon(FEditorStyle::GetStyleSetName(), ),
+				FSlateIcon(),
+				FUIAction(
+					FExecuteAction::CreateLambda([this, DataContextObject]() { OnRemoveMeshNamePrefix(DataContextObject); })
+				)
+			);
+			LevelSection.AddMenuEntry(
+				"AssetUncooker",
+				LOCTEXT("Xrd777EditUncookerLabel", "Mass uncook assets"),
+				LOCTEXT("Xrd777EditUncookerTooltip", "Automatically uncooks assets in the given folder by duplicating and renaming"),
+				//FSlateIcon(FEditorStyle::GetStyleSetName(), ),
+				FSlateIcon(),
+				FUIAction(
+					FExecuteAction::CreateLambda([this, DataContextObject]() { UncookAssetsInFolder(DataContextObject); })
 				)
 			);
 		}
@@ -815,6 +837,59 @@ void FXrd777RiriModule::InitializePlayerStartParameters(FXrd777EditJsonObject* I
 }
 
 void FXrd777RiriModule::InitializeFldCameraParameters(FXrd777EditJsonObject* InJsonObject, AFldCameraBase* InCamera) {
+}
+
+void FXrd777RiriModule::OnRemoveMeshNamePrefix(UContentBrowserDataMenuContext_AddNewMenu* DataContextObject) {
+	// TODO: Define a custom regex for this by opening a dialog box after selection (similar to chunk ID dialog)
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	if (DataContextObject->SelectedPaths.Num() > 0) {
+		TArray<FAssetData> AssetsList;
+		bool bGotAssetsSuccess = AssetRegistryModule.Get().GetAssetsByPath(FName(DataContextObject->SelectedPaths[0]), AssetsList);
+		//const FRegexPattern AnimSequencePattern = FRegexPattern(TEXT("A_\\w{2}\\d{4}"));
+		const FRegexPattern AnimSequencePattern = FRegexPattern(TEXT("A_CH_"));
+		TArray<FAssetRenameData> AssetsToRename;
+		for (FAssetData& Asset : AssetsList) {
+			FString AssetFilename = FPaths::GetBaseFilename(Asset.GetPackage()->GetPathName());
+			FRegexMatcher MatchString = FRegexMatcher(AnimSequencePattern, AssetFilename);
+			if (MatchString.FindNext()) {
+				//FString NewFilename = FPaths::Combine(FPaths::GetPath(Asset.GetPackage()->GetPathName()), AssetFilename.RightChop(MatchString.GetMatchBeginning()));
+				//Utilities.MakeIntoUnrealPath(NewFilename);
+				FString NewFilename = AssetFilename.RightChop(MatchString.GetMatchBeginning());
+				AssetsToRename.Add(FAssetRenameData(Asset.GetAsset(), FPaths::GetPath(Asset.GetPackage()->GetPathName()), NewFilename));
+			}
+		}
+		AssetToolsModule.Get().RenameAssets(AssetsToRename);
+		ContentBrowserModule.Get().SyncBrowserToAssets(AssetsList);
+	}
+}
+
+void FXrd777RiriModule::UncookAssetsInFolder(UContentBrowserDataMenuContext_AddNewMenu* DataContextObject) {
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	if (DataContextObject->SelectedPaths.Num() > 0) {
+		TArray<FAssetData> AssetsList;
+		TArray<UObject*> OldAssets;
+		TArray<TTuple<FString, UObject*>> NewAssets;
+		bool bGotAssetsSuccess = AssetRegistryModule.Get().GetAssetsByPath(FName(DataContextObject->SelectedPaths[0]), AssetsList);
+		for (FAssetData& Asset : AssetsList) {
+			if (Asset.GetAsset()->GetPackage()->bIsCookedForEditor) {
+				FString OriginalAssetPath = Asset.GetAsset()->GetPackage()->GetPathName();
+				FString DuplicateNameTemp = OriginalAssetPath + "1";
+				UObject* NewAsset = AssetToolsModule.Get().DuplicateAsset(FPaths::GetBaseFilename(DuplicateNameTemp), FPaths::GetPath(DuplicateNameTemp), Asset.GetAsset());
+				OldAssets.Add(Asset.GetAsset());
+				NewAssets.Emplace(OriginalAssetPath, NewAsset);
+			}
+		}
+		ObjectTools::ForceDeleteObjects(OldAssets, false);
+		for (TTuple<FString, UObject*>& NewAsset : NewAssets) {
+			NewAsset.Value->Rename(*FPaths::GetBaseFilename(NewAsset.Key));
+			UPackage::Save(NewAsset.Value->GetPackage(), NewAsset.Value, RF_Public | RF_Standalone, *FPackageName::LongPackageNameToFilename(NewAsset.Key, FPackageName::GetAssetPackageExtension()));
+		}
+		ContentBrowserModule.Get().SyncBrowserToAssets(AssetsList);
+	}
 }
 
 

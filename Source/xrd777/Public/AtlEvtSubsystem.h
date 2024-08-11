@@ -23,11 +23,19 @@
 #include "Templates/SubclassOf.h"
 #include "AtlEvtPreDataAsset.h"
 #include "AtlEvtOnePicture.h"
+#include "Engine/Classes/Engine/LevelStreamingDynamic.h"
+#include "AppCharBaseComp.h"
+#include "MovieScene/Public/MovieSceneSequenceTickManager.h"
+#include "AtlEvtActorComponent.h"
+#include "AtlEvtEventManager.h"
+#include "LevelSequence/Public/LevelSequenceActor.h"
+#include "AtlEvtLevelSequenceActor.h"
 
 #if WITH_EDITORONLY_DATA
 #include "Modules/ModuleManager.h"
 #include "AssetRegistryModule.h"
 #include "IAssetRegistry.h"
+
 #endif
 
 #include "AtlEvtSubsystem.generated.h"
@@ -90,9 +98,22 @@ private:
     
     UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
     TWeakObjectPtr<UWorld> EventSublevelWorldObjPtr;
+
+    UMovieSceneSequenceTickManager* TickManager; // + 0x1a8
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     TArray<FAtlEvtPlayLoadSublevelInfo> LoadedEventSublevelInfos;
+
+    bool bIsPlaying; // + 0x1c8
+    FString EventRank; // + 0x1d0
+    bool bShowCinemascope; // + 0x1e0
+    FString EventLevel; // + 0x1e8
+    int32 EventCategoryId; // + 0x1f8
+    int32 EventMajorId; // + 0x220
+    int32 EventMinorId; // + 0x224
+    int32 BGFieldMajorId; // + 0x238
+    int32 BGFieldMinorId; // + 0x23c
+    EAtlEvtPlayMode EventPlayMode; // + 0x269
     
 public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
@@ -247,5 +268,7 @@ protected:
     UFUNCTION(BlueprintCallable, meta=(WorldContext="WorldContextObject"))
     void CallCategoryEvent(UObject* WorldContextObject, EAtlEvtEventCategoryType CategoryType, int32 EventMajorID, int32 EventMinorID, const FAtlEvtPlayParameter& Param);
     
+private:
+    bool IsEventRankA();
 };
 

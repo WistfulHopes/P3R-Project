@@ -7,6 +7,11 @@
 #include "MovieSceneEvtCharaAnimationSection.h"
 #include "MovieSceneEvtCharaAnimationSectionData.h"
 #include "MovieSceneEvtConditionalBranchData.h"
+//#include "Core/Public/UObject/WeakObjectPtrTemplates.h"
+
+#include "AtlEvtSubsystem.h"
+#include "BFLEventMovieScene.h"
+
 #include "MovieSceneEvtCharaAnimationSectionTemplate.generated.h"
 
 USTRUCT(BlueprintType)

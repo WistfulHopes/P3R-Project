@@ -7,6 +7,10 @@
 #include "MovieSceneEvtCharaHandwritingSection.h"
 #include "MovieSceneEvtCharaHandwritingSectionData.h"
 #include "MovieSceneEvtConditionalBranchData.h"
+
+#include "AtlEvtHandwritingSubsystem.h"
+#include "LevelSequence/Public/LevelSequencePlayer.h"
+
 #include "MovieSceneEvtCharaHandwritingSectionTemplate.generated.h"
 
 USTRUCT(BlueprintType)
@@ -27,7 +31,7 @@ public:
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FMovieSceneEvtConditionalBranchData CondBranchData;
-    
+
     XRD777_API FMovieSceneEvtCharaHandwritingSectionTemplate();
     FMovieSceneEvtCharaHandwritingSectionTemplate(const UMovieSceneEvtCharaHandwritingSection& Section);
 private:

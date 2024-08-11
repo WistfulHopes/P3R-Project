@@ -8,6 +8,12 @@
 #include "EEventManagerMessageState.h"
 #include "EEventManagerSeqControllerState.h"
 #include "Templates/SubclassOf.h"
+
+#include "BmdAssetPlugin/Public/BmdAsset.h"
+#include "AtlEvtLevelSequenceActor.h"
+#include "EAtlEvtEventCategoryType.h"
+#include "EvtDialoguePayload.h"
+
 #include "AtlEvtEventManager.generated.h"
 
 class AActor;
@@ -55,6 +61,8 @@ protected:
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     int32 ExecutingMessageNo;
+
+public:
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     EEventManagerMessageState MessageState;
@@ -69,7 +77,7 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Transient, meta=(AllowPrivateAccess=true))
     AUIVoiceAnswer* UINetAnswerActor;
     
-protected:
+//protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     UMovieSceneSequencePlayer* EventSequencePlayer;
     
@@ -82,9 +90,19 @@ protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Transient, meta=(AllowPrivateAccess=true))
     AAtlEvtEventManager_PauseActor* PauseControllerActor;
     
-private:
+//private:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     UAtlEvtMoviePlayManager* MoviePlayManager;
+
+    // Cache result for AAtlEvtEventManager::GetAtlEvtLevelSequenceActor when it's called during PIE
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true))
+    AAtlEvtLevelSequenceActor* ActiveLevelSequenceActor;
+
+    // Evt Dialog State
+    FEvtDialoguePayload CurrentEvtDialoguePayload;
+    BmdData CurrentBmdData;
+    TSharedRef<BmdDialogBase>* CurrentBmdDialog;
+    int32 CurrentBmdPage;
     
 public:
     AAtlEvtEventManager();
@@ -148,6 +166,56 @@ public:
     
     UFUNCTION(BlueprintCallable)
     void ExecuteBmdMessage(UBmdAsset* InAsset, int32 InMessageMajorID, int32 InMessageMinorID, int32 InMessageSubID, int32 InMessagePageID, bool bInEnableMessageRef, int32 InSeqEventMessageID);
+
+    UFUNCTION(BlueprintImplementableEvent, meta=(DisplayName = "ExecuteBmdMessage"), Category="Atl Event")
+    void ReceiveExecuteBmdMessage(UBmdAsset* InAsset, int32 InMessageMajorID, int32 InMessageMinorID, int32 InMessageSubID, int32 InMessagePageID, bool bInEnableMessageRef, int32 InSeqEventMessageID);
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "DrawMessage"), Category = "Atl Event")
+    void ReceiveDrawMessage(const FString& MessageText, const FString& SpeakerText);
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "DrawBustup"), Category = "Atl Event")
+    void ReceiveDrawBustup(int32 CharacterId, int32 a2, int32 a3, int32 a4, int32 a5, int32 a6);
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "PlayVoiceLine"), Category = "Atl Event")
+    void ReceivePlayVoiceLine(int32 a1, int32 a2, int32 a3, int32 a4, int32 a5, int32 a6);
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "SetTextColor"), Category = "Atl Event")
+    void ReceiveSetTextColor(FLinearColor Color);
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "DrawFirstName"), Category = "Atl Event")
+    void ReceiveDrawFirstName();
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "DrawLastName"), Category = "Atl Event")
+    void ReceiveDrawLastName();
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "DrawCutin"), Category = "Atl Event")
+    void ReceiveDrawCutin(int32 Major, int32 Minor, int32 a3);
+
+    UFUNCTION(BlueprintCallable, meta=(WorldContext = "WorldContextObject"))
+    AAtlEvtLevelSequenceActor* GetAtlEvtLevelSequenceActor(const UObject* WorldContextObject);
+
+    UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+    FString CreateEventDebugText(const UObject* WorldContextObject, const FString& EventType, int32 EventMajor, int32 EventMinor, FName EventRankVisible);
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "UpdateMsgDebug"), Category = "Atl Event")
+    void ReceiveUpdateMsgDebug(const FString& DebugText, bool bVisibility);
+
+    UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Atl Event")
+    void BmdTryNextPage(const UObject* WorldContextObject);
+
+    void ExecuteBmdDialog(const UObject* WorldContextObject, FEvtDialoguePayload& Payload);
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "ClearBustup"), Category = "Atl Event")
+    void ReceiveClearBustup();
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "ClearMessageBox"), Category = "Atl Event")
+    void ReceiveClearMessageBox();
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "CreateSelectOptions"), Category = "Atl Event")
+    void ReceiveCreateSelectOptions(const TArray<FString>& SelOptions);
+
+    UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Atl Event")
+    void BmdExecuteSelection(const UObject* WorldContextObject, int32 SelectId);
     
     UFUNCTION(BlueprintCallable)
     void CloseMessage();

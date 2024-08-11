@@ -210,5 +210,8 @@ private:
 	void AddSceneComponentProperties(nlohmann::json InJson, USceneComponent* InComponent);
 	void InitializePlayerStartParameters(FXrd777EditJsonObject* InJsonObject, APlayerStart* InPlayerStart);
 	void InitializeFldCameraParameters(FXrd777EditJsonObject* InJsonObject, AFldCameraBase* InCamera);
+
+	void OnRemoveMeshNamePrefix(UContentBrowserDataMenuContext_AddNewMenu* DataContextObject);
+	void UncookAssetsInFolder(UContentBrowserDataMenuContext_AddNewMenu* DataContextObject);
 #endif
 };
