@@ -17,6 +17,9 @@ struct FEvtSeqControllerExecutionToken: IMovieSceneExecutionToken {
         if (!World) {
             return;
         }
+        if (!CondBranchData.IsCondition(Context, Operand, PersistentData, Player)) {
+            return;
+        }
         for (TWeakObjectPtr<> BoundObject : Player.FindBoundObjects(Operand)) {
             if (UObject* InObject = BoundObject.Get()) {
                 if (InObject->IsA<AAtlEvtEventManager>()) {

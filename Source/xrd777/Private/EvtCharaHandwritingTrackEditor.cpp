@@ -10,6 +10,7 @@
 #include <CharacterBase/Public/CharacterBaseCore.h>
 #include <CharacterBase/Public/NpcBaseCore.h>
 #include <Xrd777/Public/AppPropsCore.h>
+#include "EvtConditionBranchDetailsCustom.h"
 
 #define LOCTEXT_NAMESPACE "FEvtCharaHandwritingTrackEditor"
 
@@ -70,6 +71,27 @@ bool FEvtCharaHandwritingTrackEditor::SupportsType(TSubclassOf<UMovieSceneTrack>
 const FSlateBrush* FEvtCharaHandwritingTrackEditor::GetIconBrush() const
 {
 	return FEditorStyle::GetBrush("Sequencer.Tracks.Audio");
+}
+
+void FEvtCharaHandwritingTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
+	UMovieSceneEvtCharaHandwritingTrack* CastTrack = Cast<UMovieSceneEvtCharaHandwritingTrack>(Track);
+	MenuBuilder.AddSubMenu(
+		LOCTEXT("EvtCharaAnimEditConditionalBrach", "Conditional Data"),
+		FText(),
+		FNewMenuDelegate::CreateRaw(this, &FEvtCharaHandwritingTrackEditor::BuildEventConditionalBranchMenu, CastTrack),
+		false,
+		FSlateIcon());
+}
+
+void FEvtCharaHandwritingTrackEditor::BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtCharaHandwritingTrack* Track) {
+	FDetailsViewArgs DetailViewArgs = FDetailsViewArgs(false, false, false, FDetailsViewArgs::ActorsUseNameArea, true, nullptr, false, FName());
+	TSharedRef<IDetailsView> DetailsView = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor").CreateDetailView(DetailViewArgs);
+	DetailsView->RegisterInstancedCustomPropertyLayout(
+		UMovieSceneEvtCharaHandwritingTrack::StaticClass(),
+		FOnGetDetailCustomizationInstance::CreateLambda([Track] { return FEvtConditionBranchDetailsCustom::MakeInstance(*Track); })
+	);
+	DetailsView->SetObject(Track);
+	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
 }
 
 // Callbacks

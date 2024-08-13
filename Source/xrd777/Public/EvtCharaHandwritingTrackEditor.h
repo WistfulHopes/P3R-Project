@@ -39,6 +39,9 @@ public:
 	virtual bool SupportsType(TSubclassOf<UMovieSceneTrack> Type) const override;
 	virtual const FSlateBrush* GetIconBrush() const override;
 
+	virtual void BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track);
+	void BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtCharaHandwritingTrack* Track);
+
 private:
 	void HandleAddEvtCharaHandwritingTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);
 	bool HandleAddEvtCharaHandwritingTrackMenuEntryCanExecute() const;

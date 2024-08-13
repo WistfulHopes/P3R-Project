@@ -28,29 +28,19 @@ bool UBustupExistDataAsset::GetBustupParameters(int32 Character, int32 Face, int
 }
 
 UTexture2D* UBustupExistDataAsset::GetPoseTexture(int32 CharacterID, int32 ClothID, const FString& PoseName) {
-#if WITH_EDITORONLY_DATA
 	return GetBustupTexturePart(CharacterID, FString::Printf(TEXT("T_BU_PC%04d_%s_C%03d"), CharacterID, *PoseName, ClothID));
-#else
-	return nullptr;
-#endif
 }
 
 UTexture2D* UBustupExistDataAsset::GetEyeTexture(int32 CharacterID, int32 FaceID, int32 EyePartID, int32 EyePhaseID) {
-#if WITH_EDITORONLY_DATA
 	return GetBustupTexturePart(CharacterID, FString::Printf(TEXT("T_BU_PC%04d_F%02d_C%03d_E%d"), CharacterID, FaceID, EyePartID, EyePhaseID));
-#else
-	return nullptr;
-#endif
 }
 
 UTexture2D* UBustupExistDataAsset::GetMouthTexture(int32 CharacterID, int32 FaceID, int32 MouthPartID, int32 MouthPhaseID) {
-#if WITH_EDITORONLY_DATA
 	return GetBustupTexturePart(CharacterID, FString::Printf(TEXT("T_BU_PC%04d_F%02d_C%03d_M%d"), CharacterID, FaceID, MouthPartID, MouthPhaseID));
-	return nullptr;
-#endif
 }
 
 UTexture2D* UBustupExistDataAsset::GetBustupTexturePart(int32 CharacterID, const FString& Filename) {
+#if WITH_EDITORONLY_DATA
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	FString Filepath = FString::Printf(TEXT("/Game/Xrd777/UI/Bustup/Textures/PC%04d"), CharacterID);
 	Filepath = FPaths::Combine(Filepath, Filename);
@@ -62,4 +52,7 @@ UTexture2D* UBustupExistDataAsset::GetBustupTexturePart(int32 CharacterID, const
 	else {
 		return nullptr;
 	}
+#else
+	return nullptr;
+#endif
 }

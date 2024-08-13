@@ -13,6 +13,7 @@
 #include "AtlEvtLevelSequenceActor.h"
 #include "EAtlEvtEventCategoryType.h"
 #include "EvtDialoguePayload.h"
+//#include "AtlEvtSubsystem.h"
 
 #include "AtlEvtEventManager.generated.h"
 
@@ -216,6 +217,12 @@ public:
 
     UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Atl Event")
     void BmdExecuteSelection(const UObject* WorldContextObject, int32 SelectId);
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "SetLocalDataBP"), Category = "Atl Event")
+    void ReceiveSetLocalDataBP(int32 Index, int32 Data);
+
+    UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "GetLocalDataBP"), Category = "Atl Event")
+    int32 ReceiveGetLocalDataBP(int32 Index);
     
     UFUNCTION(BlueprintCallable)
     void CloseMessage();

@@ -102,6 +102,8 @@
 #include "xrd777/Public/FldCameraHitSpline.h"
 
 #include "UnrealEd/Public/ObjectTools.h"
+#include "Misc/MessageDialog.h"
+#include "ContentBrowser/Public/ContentBrowserMenuContexts.h"
 
 #define LOCTEXT_NAMESPACE "FXrd777Module"
 
@@ -146,6 +148,11 @@ void FXrd777RiriModule::StartupModule() {
 	// Hook on Asset Loaded
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	//AssetRegistryModule.Get().OnAssetAdded().AddRaw(this, &FXrd777RiriModule::OnAddedAssetToRegistry);
+
+	RemoveNameByRegexOptions.Empty();
+	RemoveNameByRegexOptions.Add(MakeShareable(new FString("Prefix")));
+	RemoveNameByRegexOptions.Add(MakeShareable(new FString("Suffix")));
+	RemoveNameByRegexOptionsSelectedId = 0;
 
 #endif
 }
@@ -213,7 +220,7 @@ void FXrd777RiriModule::RegisterMenus() {
 			);
 			LevelSection.AddMenuEntry(
 				"RemoveMeshNameFromAnim",
-				LOCTEXT("Xrd777EditAnimRenameLabel", "Remove mesh prefix from animation sequences"),
+				LOCTEXT("Xrd777EditAnimRenameLabel", "Remove prefix/suffix by regex"),
 				LOCTEXT("Xrd777EditAnimRenameTooltip", "If importing a BaseSkelton with several anims, remove the mesh name prefixed to each sequence"),
 				//FSlateIcon(FEditorStyle::GetStyleSetName(), ),
 				FSlateIcon(),
@@ -221,6 +228,7 @@ void FXrd777RiriModule::RegisterMenus() {
 					FExecuteAction::CreateLambda([this, DataContextObject]() { OnRemoveMeshNamePrefix(DataContextObject); })
 				)
 			);
+			/*
 			LevelSection.AddMenuEntry(
 				"AssetUncooker",
 				LOCTEXT("Xrd777EditUncookerLabel", "Mass uncook assets"),
@@ -231,6 +239,7 @@ void FXrd777RiriModule::RegisterMenus() {
 					FExecuteAction::CreateLambda([this, DataContextObject]() { UncookAssetsInFolder(DataContextObject); })
 				)
 			);
+			*/
 		}
 	}));
 }
@@ -842,26 +851,133 @@ void FXrd777RiriModule::InitializeFldCameraParameters(FXrd777EditJsonObject* InJ
 void FXrd777RiriModule::OnRemoveMeshNamePrefix(UContentBrowserDataMenuContext_AddNewMenu* DataContextObject) {
 	// TODO: Define a custom regex for this by opening a dialog box after selection (similar to chunk ID dialog)
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
-	FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
 	if (DataContextObject->SelectedPaths.Num() > 0) {
-		TArray<FAssetData> AssetsList;
-		bool bGotAssetsSuccess = AssetRegistryModule.Get().GetAssetsByPath(FName(DataContextObject->SelectedPaths[0]), AssetsList);
-		//const FRegexPattern AnimSequencePattern = FRegexPattern(TEXT("A_\\w{2}\\d{4}"));
-		const FRegexPattern AnimSequencePattern = FRegexPattern(TEXT("A_CH_"));
-		TArray<FAssetRenameData> AssetsToRename;
-		for (FAssetData& Asset : AssetsList) {
-			FString AssetFilename = FPaths::GetBaseFilename(Asset.GetPackage()->GetPathName());
-			FRegexMatcher MatchString = FRegexMatcher(AnimSequencePattern, AssetFilename);
-			if (MatchString.FindNext()) {
-				//FString NewFilename = FPaths::Combine(FPaths::GetPath(Asset.GetPackage()->GetPathName()), AssetFilename.RightChop(MatchString.GetMatchBeginning()));
-				//Utilities.MakeIntoUnrealPath(NewFilename);
-				FString NewFilename = AssetFilename.RightChop(MatchString.GetMatchBeginning());
-				AssetsToRename.Add(FAssetRenameData(Asset.GetAsset(), FPaths::GetPath(Asset.GetPackage()->GetPathName()), NewFilename));
-			}
-		}
-		AssetToolsModule.Get().RenameAssets(AssetsToRename);
-		ContentBrowserModule.Get().SyncBrowserToAssets(AssetsList);
+		TSharedPtr<SWindow> RootWindow = FGlobalTabmanager::Get()->GetRootWindow();
+		bool bGotAssetsSuccess = AssetRegistryModule.Get().GetAssetsByPath(FName(DataContextObject->SelectedPaths[0]), RemmoveNameByRegexAssetData);
+		TSharedPtr<SWindow> RemoveMeshWindow = SNew(SWindow)
+			.SupportsMaximize(false)
+			.SupportsMinimize(false)
+			.SizingRule(ESizingRule::Autosized)
+			.Title(LOCTEXT("Xrd777EditMeshPrefixTitle", "Remove name part by regex"));
+		;
+		RemoveMeshWindow->SetContent(
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Center)
+			[
+				SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Center)
+					[
+						SNew(STextBlock)
+							.Text(FText::FromString("Remove: "))
+					]
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Center)
+					[
+						SNew(STextComboBox)
+							.OptionsSource(&RemoveNameByRegexOptions)
+							.InitiallySelectedItem(RemoveNameByRegexOptions[RemoveNameByRegexOptionsSelectedId])
+							.OnSelectionChanged_Lambda([this](TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo) {
+								int32 SelectIndex = RemoveNameByRegexOptions.IndexOfByKey(NewSelection);
+								if (SelectIndex != INDEX_NONE) {
+									RemoveNameByRegexOptionsSelectedId = SelectIndex;
+								}
+							})
+					]
+			]
+			+SVerticalBox::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Center)
+			[
+				SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Center)
+					[
+						SNew(STextBlock)
+							.Text(FText::FromString("Regex to match: "))
+					]
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Center)
+					[
+						SNew(SEditableTextBox)
+							.MinDesiredWidth(100.0f)
+							.Text_Lambda([this]() {
+								return FText::FromString(RemoveNameByRegexContent);
+							})
+							.OnTextChanged_Lambda([this](const FText& NewText) {
+								RemoveNameByRegexContent = NewText.ToString();
+							})
+					]
+			]
+			+ SVerticalBox::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Center)
+			[
+				SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.Padding(10, 0)
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Center)
+					[
+						SNew(SButton)
+							.Text(FText::FromString("OK"))
+							.OnClicked_Lambda([this, RemoveMeshWindow]() {
+
+								FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+								FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+
+								//const FRegexPattern AnimSequencePattern = FRegexPattern(TEXT("A_\\w{2}\\d{4}"));
+								//const FRegexPattern AnimSequencePattern = FRegexPattern(TEXT("A_CH_"));
+								const FRegexPattern AnimSequencePattern = FRegexPattern(RemoveNameByRegexContent);
+								TArray<FAssetRenameData> AssetsToRename;
+								for (FAssetData& Asset : RemmoveNameByRegexAssetData) {
+									FString AssetFilename = FPaths::GetBaseFilename(Asset.GetPackage()->GetPathName());
+									FRegexMatcher MatchString = FRegexMatcher(AnimSequencePattern, AssetFilename);
+									if (MatchString.FindNext()) {
+										FString NewFilename = (RemoveNameByRegexOptionsSelectedId == 0)
+											? AssetFilename.RightChop(MatchString.GetMatchBeginning()) // Prefix
+											: AssetFilename.LeftChop(AssetFilename.Len() - MatchString.GetMatchBeginning()); // Suffix
+										AssetsToRename.Add(FAssetRenameData(Asset.GetAsset(), FPaths::GetPath(Asset.GetPackage()->GetPathName()), NewFilename));
+									}
+								}
+								AssetToolsModule.Get().RenameAssets(AssetsToRename);
+								ContentBrowserModule.Get().SyncBrowserToAssets(RemmoveNameByRegexAssetData);
+
+								RemoveMeshWindow->RequestDestroyWindow();
+								return FReply::Handled();
+							})
+					]
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.Padding(10, 0)
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Center)
+					[
+						SNew(SButton)
+							.Text(FText::FromString("Cancel"))
+							.OnClicked_Lambda([RemoveMeshWindow]() {
+								RemoveMeshWindow->RequestDestroyWindow();
+								return FReply::Handled();
+							})
+					]
+			]
+		);
+		FSlateApplication::Get().AddModalWindow(RemoveMeshWindow.ToSharedRef(), RootWindow);
+	}
+	else {
+		FText FolderEmptyError = LOCTEXT("Xrd777EditFolderEmpty", "Folder is empty");
+		FMessageDialog::Open(EAppMsgType::Ok, FolderEmptyError);
 	}
 }
 
@@ -1068,6 +1184,8 @@ TSharedRef<SWidget> FXrd777RiriModule::CreateToolbarDropdown() {
 		MenuBuilder.AddWidget(EditToolsGetExtractedAssetsNotSet(), FText());
 		return MenuBuilder.MakeWidget();
 	}
+	// Not needed
+	/*
 	MenuBuilder.BeginSection("Xrd777EditCharacterCreate", FText::FromString("Create Character Data"));
 	MenuBuilder.AddWidget(EditToolsCreateCharacterData(), FText());
 	MenuBuilder.EndSection();
@@ -1080,6 +1198,7 @@ TSharedRef<SWidget> FXrd777RiriModule::CreateToolbarDropdown() {
 			.OnMakeDummyAnimTest_Raw(this, &FXrd777RiriModule::CreateDummyAnimTest)
 		, FText());
 	MenuBuilder.EndSection();
+	*/
 	return MenuBuilder.MakeWidget();
 }
 

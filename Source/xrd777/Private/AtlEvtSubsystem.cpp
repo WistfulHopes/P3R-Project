@@ -352,6 +352,7 @@ UAtlEvtSubsystem::UAtlEvtSubsystem() {
             EvtPreDataMap.Add(EvtHash, EventEntry);
         }
     }
+    ResetLocalData();
 #endif
 }
 

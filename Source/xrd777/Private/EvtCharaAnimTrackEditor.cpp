@@ -10,6 +10,7 @@
 #include <CharacterBase/Public/CharacterBaseCore.h>
 #include <CharacterBase/Public/NpcBaseCore.h>
 #include <Xrd777/Public/AppPropsCore.h>
+#include "EvtConditionBranchDetailsCustom.h"
 
 #define LOCTEXT_NAMESPACE "FEvtCharaAnimTrackEditor"
 
@@ -72,6 +73,27 @@ bool FEvtCharaAnimTrackEditor::SupportsType(TSubclassOf<UMovieSceneTrack> Type) 
 const FSlateBrush* FEvtCharaAnimTrackEditor::GetIconBrush() const
 {
 	return FEditorStyle::GetBrush("Sequencer.Tracks.Audio");
+}
+
+void FEvtCharaAnimTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
+	UMovieSceneEvtCharaAnimationTrack* CastTrack = Cast<UMovieSceneEvtCharaAnimationTrack>(Track);
+	MenuBuilder.AddSubMenu(
+		LOCTEXT("EvtCharaAnimEditConditionalBrach", "Conditional Data"),
+		FText(),
+		FNewMenuDelegate::CreateRaw(this, &FEvtCharaAnimTrackEditor::BuildEventConditionalBranchMenu, CastTrack),
+		false,
+		FSlateIcon());
+}
+
+void FEvtCharaAnimTrackEditor::BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtCharaAnimationTrack* Track) {
+	FDetailsViewArgs DetailViewArgs = FDetailsViewArgs(false, false, false, FDetailsViewArgs::ActorsUseNameArea, true, nullptr, false, FName());
+	TSharedRef<IDetailsView> DetailsView = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor").CreateDetailView(DetailViewArgs);
+	DetailsView->RegisterInstancedCustomPropertyLayout(
+		UMovieSceneEvtCharaAnimationTrack::StaticClass(),
+		FOnGetDetailCustomizationInstance::CreateLambda([Track] { return FEvtConditionBranchDetailsCustom::MakeInstance(*Track); })
+	);
+	DetailsView->SetObject(Track);
+	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
 }
 
 // Callbacks

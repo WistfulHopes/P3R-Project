@@ -103,11 +103,12 @@ void AAtlEvtEventManager::ExecuteBmdMessage(UBmdAsset* InAsset, int32 InMessageM
                 SpeakerName = *SpeakerMaybe;
             }
         }
+        FString MessageText;
         for (TSharedPtr<BmdTokenBase>& Token : TargetDialog.Pages[InMessagePageID]) {
             if (Token.IsValid()) {
                 BmdTokenBase* TokenInner = Token.Get();
                 if (TokenInner->IsText()) {
-                    ReceiveDrawMessage(((BmdMessageToken*)TokenInner)->MessageText, SpeakerName);
+                    MessageText += ((BmdMessageToken*)TokenInner)->MessageText;
                 }
                 else { // Function tokens
                     BmdFunctionToken* FnToken = (BmdFunctionToken*)TokenInner;
@@ -130,10 +131,15 @@ void AAtlEvtEventManager::ExecuteBmdMessage(UBmdAsset* InAsset, int32 InMessageM
                     case 4:
                         switch (FnToken->FunctionIndex) {
                         case 1:
-                            ReceiveDrawLastName();
+                            MessageText += "FIRSTNAM";
+                            //ReceiveDrawLastName();
                             break;
                         case 2:
-                            ReceiveDrawFirstName();
+                            MessageText += "LASTNAME";
+                            //ReceiveDrawFirstName();
+                            break;
+                        case 3:
+                            MessageText += "FIRSTNAM LASTNAME";
                             break;
                         case 5:
                             ReceiveDrawBustup(FnToken->Parameters[0], FnToken->Parameters[1], FnToken->Parameters[2],
@@ -147,6 +153,9 @@ void AAtlEvtEventManager::ExecuteBmdMessage(UBmdAsset* InAsset, int32 InMessageM
                     }
                 }
             }
+        }
+        if (!MessageText.IsEmpty()) {
+            ReceiveDrawMessage(MessageText, SpeakerName);
         }
     }
 }
@@ -263,6 +272,7 @@ void AAtlEvtEventManager::BmdTryNextPage(const UObject* WorldContextObject) {
 }
 
 void AAtlEvtEventManager::BmdExecuteSelection(const UObject* WorldContextObject, int32 SelectId) {
+    ReceiveSetLocalDataBP(CurrentEvtDialoguePayload.SelectResponceToLocalDataID, SelectId);
     AAtlEvtLevelSequenceActor* LevelSequenceActor = GetAtlEvtLevelSequenceActor(WorldContextObject);
     ReceiveDrawMessage(TEXT(""), TEXT(""));
     ReceiveClearMessageBox();

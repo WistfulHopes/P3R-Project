@@ -78,6 +78,27 @@ const FSlateBrush* FEvtSeqTimeJumpControlTrackEditor::GetIconBrush() const
 	return FEditorStyle::GetBrush("Sequencer.Tracks.Audio");
 }
 
+void FEvtSeqTimeJumpControlTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
+	UMovieSceneEvtSeqTimeJumpControllerTrack* CastTrack = Cast<UMovieSceneEvtSeqTimeJumpControllerTrack>(Track);
+	MenuBuilder.AddSubMenu(
+		LOCTEXT("EvtCharaAnimEditConditionalBrach", "Conditional Data"),
+		FText(),
+		FNewMenuDelegate::CreateRaw(this, &FEvtSeqTimeJumpControlTrackEditor::BuildEventConditionalBranchMenu, CastTrack),
+		false,
+		FSlateIcon());
+}
+
+void FEvtSeqTimeJumpControlTrackEditor::BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtSeqTimeJumpControllerTrack* Track) {
+	FDetailsViewArgs DetailViewArgs = FDetailsViewArgs(false, false, false, FDetailsViewArgs::ActorsUseNameArea, true, nullptr, false, FName());
+	TSharedRef<IDetailsView> DetailsView = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor").CreateDetailView(DetailViewArgs);
+	DetailsView->RegisterInstancedCustomPropertyLayout(
+		UMovieSceneEvtSeqTimeJumpControllerTrack::StaticClass(),
+		FOnGetDetailCustomizationInstance::CreateLambda([Track] { return FEvtConditionBranchDetailsCustom::MakeInstance(*Track); })
+	);
+	DetailsView->SetObject(Track);
+	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
+}
+
 // Callbacks
 /*
 void FEvtSeqTimeJumpControlTrackEditor::HandleAddEvtSeqTimeJumpControlTrackMenuEntryExecute() {

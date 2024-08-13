@@ -18,7 +18,7 @@ bool FMovieSceneEvtConditionalBranchData::IsCondition(const FMovieSceneContext& 
         ConditionalType == EEvtConditionalBranchType::RefFromGlobalCounter) {
         return GetCompareResult(ConditionalNo);
     }
-    else if (ConditionalType == EEvtConditionalBranchType::RefFromGlobalFlag) {
+    else if (ConditionalType == EEvtConditionalBranchType::RefFromLocal) {
         AAtlEvtEventManager* EventManager = nullptr;
         for (TWeakObjectPtr<> BoundObject : Player.FindBoundObjects(Operand)) {
             UObject* InObject = BoundObject.Get();

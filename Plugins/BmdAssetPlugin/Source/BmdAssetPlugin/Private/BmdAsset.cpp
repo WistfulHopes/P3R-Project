@@ -94,33 +94,23 @@ BmdFunctionToken* BmdDialogBase::ReadFunctionToken(FArchive& Ar, uint8 FirstByte
 BmdMessageToken* BmdDialogBase::ReadMessageToken(FArchive& Ar, uint8 FirstByte) {
 	TArray<uint8> Bytes;
 	Bytes.Add(FirstByte);
-	while (Bytes.Last() != 0xa) {
+	while (CheckMessageTokenStream(Bytes.Last())) {
 		Ar << Bytes.AddDefaulted_GetRef();
 	}
-	Bytes.Add(0);
+	if (Bytes.Last() == 0xfe) {
+		Ar.Seek(Ar.Tell() - 1);
+		Bytes[Bytes.Num() - 1] = 0;
+	}
+	else {
+		Bytes.Add(0);
+	}
 	BmdMessageToken* NewMessage = new BmdMessageToken(Bytes);
 	//UE_LOG(BmdAssetDebug, Display, TEXT("Read Message token at %d: %s"), Ar.Tell(), *NewMessage->PrintValue());
 	return NewMessage;
 }
 
-BmdMessageToken* BmdDialogSelection::ReadMessageToken(FArchive& Ar, uint8 FirstByte) {
-	TArray<uint8> Bytes;
-	Bytes.Add(FirstByte);
-	while (Bytes.Last() != 0x0) {
-		Ar << Bytes.AddDefaulted_GetRef();
-	}
-	//Bytes.Add(0);
-	BmdMessageToken* NewMessage = new BmdMessageToken(Bytes);
-
-	// Align to nearest 4 bytes
-
-	int32 StreamAlign = Ar.Tell() % 0x4;
-	if (StreamAlign != 0) {
-		int32 StreamDiff = 0x4 - StreamAlign;
-		Ar.Seek(Ar.Tell() + StreamDiff);
-	}
-
-	return NewMessage;
+bool BmdDialogBase::CheckMessageTokenStream(uint8 LastByte) {
+	return LastByte != 0xa && LastByte != 0x0 && LastByte != 0xfe;
 }
 
 // Read through a list of pages worth of tokens
@@ -129,13 +119,9 @@ void BmdDialogBase::ReadDialogTokens(FArchive& Ar, TArray<int32>& Offsets, int64
 	int32 CurrentPage = 0;
 	int32 StartPos = Ar.Tell();
 	uint8 CurrentByte;
-	do {
+	while (Ar.Tell() < StartPos + TokenSize) {
 		if (CurrentPage < Offsets.Num() - 1 && Ar.Tell() >= DialogBase + Offsets[CurrentPage + 1]) {
 			CurrentPage++;
-		}
-		if (Ar.Tell() > StartPos + TokenSize) {
-			// Check if we exceeded the dialog token size - this can happen with selection dialogs after stream alignment
-			break;
 		}
 		Ar << CurrentByte;
 		if (CurrentByte == 0xfe) {
@@ -146,8 +132,7 @@ void BmdDialogBase::ReadDialogTokens(FArchive& Ar, TArray<int32>& Offsets, int64
 			TSharedPtr<BmdTokenBase> NewMsg(ReadMessageToken(Ar, CurrentByte));
 			Pages[CurrentPage].Add(NewMsg);
 		}
-	} while (CurrentByte != 0);
-	//return Ar;
+	}
 }
 
 FArchive& operator<<(FArchive& Ar, BmdData& Data) {

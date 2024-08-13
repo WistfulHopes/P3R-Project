@@ -37,6 +37,9 @@ public:
 	virtual bool SupportsType(TSubclassOf<UMovieSceneTrack> Type) const override;
 	virtual const FSlateBrush* GetIconBrush() const override;
 
+	virtual void BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track);
+	void BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtSeqControllerTrack* Track);
+
 private:
 	void HandleAddEvtSeqControlTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);
 	bool HandleAddEvtSeqControlTrackMenuEntryCanExecute() const;

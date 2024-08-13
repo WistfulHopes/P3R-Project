@@ -86,8 +86,9 @@ public:
     }
     FString PrintValue() override {
         FString FnFmt = FString::Printf(TEXT("[f %d %d "), TableIndex, FunctionIndex);
-        for (int16& Param : Parameters) {
-            FnFmt += FString::Printf(TEXT("%d "), ((Param & 0xff) - 1) << 8 | ((Param & 0xff00) - 1) >> 8);
+        for (int16 Param : Parameters) {
+            int16 ParamAdj = ((Param & 0xff) - 1) << 8 | ((Param & 0xff00) - 1) >> 8;
+            FnFmt += FString::Printf(TEXT("%d "), ParamAdj);
         }
         FnFmt = FnFmt.LeftChop(1);
         FnFmt += TEXT("]");
@@ -233,6 +234,7 @@ public:
     virtual void ReadDialogTokens(FArchive& Ar, TArray<int32>& Offsets, int64 DialogBase, int32 TokenSize);
     BmdFunctionToken* ReadFunctionToken(FArchive& Ar, uint8 FirstByte);
     virtual BmdMessageToken* ReadMessageToken(FArchive& Ar, uint8 FirstByte);
+    static bool CheckMessageTokenStream(uint8 LastByte);
 };
 
 class BmdDialogMessage : public BmdDialogBase {
@@ -260,7 +262,7 @@ public:
         return FString::Printf(TEXT("SEL_%03d_%d_%d"), MajorID, MinorID, SubID);
     }
 
-    BmdMessageToken* ReadMessageToken(FArchive& Ar, uint8 FirstByte) override;
+    //BmdMessageToken* ReadMessageToken(FArchive& Ar, uint8 FirstByte) override;
 };
 
 struct BmdBinaryMessage {
@@ -321,6 +323,11 @@ class BMDASSETPLUGIN_API UBmdAsset : public UObject {
 public:
     UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
     TArray<int8> mBuf;
+
+#if WITH_EDITORONLY_DATA
+    UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
+    FString SyncToBmdFile;
+#endif
     
     UBmdAsset();
 };
