@@ -11,29 +11,5 @@ public class BmdAssetPlugin : ModuleRules {
             "CoreUObject",
             "Engine",
         });
-        if (Target.Type == TargetRules.TargetType.Editor)
-        {
-            PublicDependencyModuleNames.AddRange(
-                new string[]
-                {
-                    "AssetRegistry",
-                    "AssetTools",
-                    "DesktopPlatform",
-                    "EditorStyle",
-                    "InputCore",
-                    "Projects",
-                    "Slate",
-                    "SlateCore",
-                    "UnrealEd"
-                }
-            );
-            PrivateDependencyModuleNames.AddRange(
-                new string[]
-                {
-                    "Slate",
-                    "SlateCore"
-                }
-            );
-        }
     }
 }
