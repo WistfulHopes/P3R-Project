@@ -57,7 +57,6 @@ public class xrd777 : ModuleRules {
             "SprAssetPlugin",
             "StaticMeshDescription",
             "TemplateSequence",
-            "ToolMenus",
             "UMG",
             "UimAssetPlugin",
         });
@@ -78,6 +77,7 @@ public class xrd777 : ModuleRules {
                     "MovieSceneTools",
                     "PropertyEditor",
                     "Sequencer",
+                    "ToolMenus",
                     "UnrealEd"
                 }
             );
