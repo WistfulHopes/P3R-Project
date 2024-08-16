@@ -93,7 +93,7 @@ struct FEvtCharaAnimationExectionToken : IMovieSceneExecutionToken {
                                     -1.0f,
                                     0.0f
                                 );
-                                if (CurrMontage) {
+                                if (CurrMontage && AnimInst) {
                                     AnimInst->Montage_Play(CurrMontage, Entry.PlayRate, EMontagePlayReturnType::MontageLength, Entry.EndOffset, true);
                                     FName DefaultName = FName("Default");
                                     AnimInst->Montage_SetNextSection(DefaultName, DefaultName);
