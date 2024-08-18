@@ -7,6 +7,6 @@ UCLASS(Blueprintable, ClassGroup=Custom, meta=(BlueprintSpawnableComponent))
 class XRD777_API UAppKoromaruComp : public UAppCharacterComp {
     GENERATED_BODY()
 public:
-    UAppKoromaruComp();
+    UAppKoromaruComp(const FObjectInitializer& ObjectInitializer);
 };
 

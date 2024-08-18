@@ -19,7 +19,7 @@ private:
     UAppCharLoader* Loader;
     
 public:
-    UAppNpcComp();
+    UAppNpcComp(const FObjectInitializer& ObjectInitializer);
     UFUNCTION(BlueprintCallable)
     void SetFootForBP(int32 ID);
     

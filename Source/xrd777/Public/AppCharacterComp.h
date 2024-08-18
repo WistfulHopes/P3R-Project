@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "AppCharBaseComp.h"
 #include "AppCharBaseCompDelegateDelegate.h"
+#include "CharacterBase/Public/CharacterBaseCore.h"
 #include "AppCharacterComp.generated.h"
 
 class AAppCharWeaponBase;
@@ -65,7 +66,7 @@ private:
     int32 mSetWeaponModelID;
     
 public:
-    UAppCharacterComp();
+    UAppCharacterComp(const FObjectInitializer& ObjectInitializer);
     UFUNCTION(BlueprintCallable)
     void UnlinkPhysics();
     

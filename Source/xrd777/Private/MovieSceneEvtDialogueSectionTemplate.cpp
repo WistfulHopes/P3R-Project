@@ -83,6 +83,9 @@ void FMovieSceneEvtDialogueSectionTemplate::EvaluateSwept(const FMovieSceneEvalu
     }
     // Check that the target event data payload entry wraps inside the given swept range
     TArray<FEvtDialoguePayload> PayloadEntries;
+    if (EventData.KeyValues.Num() != EventData.Times.Num()) {
+        return;
+    }
     for (int i = 0; i < EventData.Times.Num(); i++) {
         const FFrameNumber& CurrFrame = EventData.Times[i];
         if (CurrFrame >= SweptRange.GetLowerBoundValue() && CurrFrame < SweptRange.GetUpperBoundValue()) {

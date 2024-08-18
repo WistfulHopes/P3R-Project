@@ -7,18 +7,19 @@ void UAppCharacterComp::SetVisibleAttachComponent(bool Visible) {
 }
 
 UCharacterMovementComponent* UAppCharacterComp::GetMovement() const {
-    return NULL;
+    return Character->GetCharacterMovement();
 }
 
 ACharacterBaseCore* UAppCharacterComp::GetCharacter() const {
-    return NULL;
+    return Character;
 }
 
 UCapsuleComponent* UAppCharacterComp::GetCapsule() const {
-    return NULL;
+    return Character->GetCapsuleComponent();
 }
 
-UAppCharacterComp::UAppCharacterComp() {
+UAppCharacterComp::UAppCharacterComp(const FObjectInitializer& ObjectInitializer)
+    : Super (ObjectInitializer) {
     this->mBagMotionBlendTime_StandToRun_ = 0.15f;
     this->mBagMotionBlendTime_RunToStand_ = 0.15f;
     this->bIsBagSetting_ = false;

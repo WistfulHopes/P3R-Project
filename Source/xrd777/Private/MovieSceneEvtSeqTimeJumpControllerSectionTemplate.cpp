@@ -59,6 +59,9 @@ void FMovieSceneEvtSeqTimeJumpControllerSectionTemplate::EvaluateSwept(const FMo
         return;
     }
     // Check that the target event data payload entry wraps inside the given swept range
+    if (EventData.KeyValues.Num() != EventData.Times.Num()) {
+        return;
+    }
     TArray<TTuple<float, FEvtSeqTimeJumpControllerPayload>> PayloadEntries;
     for (int i = 0; i < EventData.Times.Num() - 1; i++) {
         const FFrameNumber& CurrFrame = EventData.Times[i];

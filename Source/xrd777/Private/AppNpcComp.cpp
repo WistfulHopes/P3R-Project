@@ -10,7 +10,8 @@ ANpcBaseCore* UAppNpcComp::GetBaseCore() const {
     return NULL;
 }
 
-UAppNpcComp::UAppNpcComp() {
+UAppNpcComp::UAppNpcComp(const FObjectInitializer& ObjectInitializer)
+:Super (ObjectInitializer){
     this->mBaseCore_ = NULL;
     this->Loader = NULL;
 }

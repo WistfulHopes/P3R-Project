@@ -179,7 +179,7 @@ protected:
     FAppCharBaseCompDelegate ResetIkDelegate;
     
 public:
-    UAppCharBaseComp();
+    UAppCharBaseComp(const FObjectInitializer& ObjectInitializer);
     UFUNCTION(BlueprintCallable)
     void StopTurnAnimation(float InBlendOutTime);
     

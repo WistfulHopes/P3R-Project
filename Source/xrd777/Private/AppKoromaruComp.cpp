@@ -1,5 +1,6 @@
 #include "AppKoromaruComp.h"
 
-UAppKoromaruComp::UAppKoromaruComp() {
+UAppKoromaruComp::UAppKoromaruComp(const FObjectInitializer& ObjectInitializer)
+:Super (ObjectInitializer){
 }
 

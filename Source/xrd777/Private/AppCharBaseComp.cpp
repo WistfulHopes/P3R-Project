@@ -235,7 +235,9 @@ TArray<UMaterialInterface*> UAppCharBaseComp::GetAllMaterial() {
 void UAppCharBaseComp::ClearDelayPauseAnimFromMotion() {
 }
 
-UAppCharBaseComp::UAppCharBaseComp() {
+UAppCharBaseComp::UAppCharBaseComp(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
+{
     this->mMotionAttached_ = NULL;
     this->mMotionDetachPrepared_ = false;
     this->bMotionDetachPreparedTransKeep_ = false;
