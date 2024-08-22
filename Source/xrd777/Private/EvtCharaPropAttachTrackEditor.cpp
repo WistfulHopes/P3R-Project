@@ -9,6 +9,7 @@
 #include <CharacterBase/Public/CharacterBaseCore.h>
 #include <CharacterBase/Public/NpcBaseCore.h>
 #include <Xrd777/Public/AppPropsCore.h>
+#include "EvtConditionBranchDetailsCustom.h"
 
 #define LOCTEXT_NAMESPACE "FEvtCharaPropAttachTrackEditor"
 
@@ -70,6 +71,50 @@ const FSlateBrush* FEvtCharaPropAttachTrackEditor::GetIconBrush() const
 	return FEditorStyle::GetBrush("Sequencer.Tracks.Audio");
 }
 
+void FEvtCharaPropAttachTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
+	UMovieSceneEvtCharaPropAttachTrack* CastTrack = Cast<UMovieSceneEvtCharaPropAttachTrack>(Track);
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("AddEvtCharaAnimTrack_SetEvtManagerBinding", "Set EVT Manager Binding"),
+		LOCTEXT("AddEvtCharaAnimTrackTooltip_SetEvtManagerBinding", "[Persona 3 Reload] Needed for conditional tracks to work properly"),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FEvtCharaPropAttachTrackEditor::SetEvtManagerBindingID, CastTrack)
+		)
+	);
+	MenuBuilder.AddSubMenu(
+		LOCTEXT("EvtCharaAnimEditConditionalBrach", "Conditional Data"),
+		FText(),
+		FNewMenuDelegate::CreateRaw(this, &FEvtCharaPropAttachTrackEditor::BuildEventConditionalBranchMenu, CastTrack),
+		false,
+		FSlateIcon());
+}
+
+void FEvtCharaPropAttachTrackEditor::BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtCharaPropAttachTrack* Track) {
+	FDetailsViewArgs DetailViewArgs = FDetailsViewArgs(false, false, false, FDetailsViewArgs::ActorsUseNameArea, true, nullptr, false, FName());
+	TSharedRef<IDetailsView> DetailsView = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor").CreateDetailView(DetailViewArgs);
+	DetailsView->RegisterInstancedCustomPropertyLayout(
+		UMovieSceneEvtCharaPropAttachTrack::StaticClass(),
+		FOnGetDetailCustomizationInstance::CreateLambda([Track] { return FEvtConditionBranchDetailsCustom::MakeInstance(*Track); })
+	);
+	DetailsView->SetObject(Track);
+	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
+}
+
+void FEvtCharaPropAttachTrackEditor::SetEvtManagerBindingID(UMovieSceneEvtCharaPropAttachTrack* Track) {
+	UMovieScene* CurrMovieScene = GetFocusedMovieScene();
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < CurrMovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = CurrMovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
+	if (EvtManagerGuid.IsValid()) {
+		Track->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+	}
+	CurrMovieScene->MarkPackageDirty();
+}
+
 // Callbacks
 
 void FEvtCharaPropAttachTrackEditor::HandleAddEvtCharaPropAttachTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds) {
@@ -92,8 +137,19 @@ void FEvtCharaPropAttachTrackEditor::HandleAddEvtCharaPropAttachTrackMenuEntryEx
 	}
 
 	check(NewTracks.Num() != 0);
+	// look for event manager
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < MovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = MovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
 	for (UMovieSceneEvtCharaPropAttachTrack* NewTrack : NewTracks) {
 		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Chara Prop Attach"));
+		if (EvtManagerGuid.IsValid()) {
+			NewTrack->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+		}
 	}
 }
 

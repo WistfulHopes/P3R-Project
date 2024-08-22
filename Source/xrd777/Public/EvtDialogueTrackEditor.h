@@ -51,6 +51,8 @@ public:
 private:
 	void HandleAddEvtDialogueTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);
 	bool HandleAddEvtDialogueTrackMenuEntryCanExecute() const;
+
+	void EvtDialogueTrackSetEvtManagerBindingID(UMovieSceneEvtDialogueTrack* DialogTrack);
 };
 
 #endif

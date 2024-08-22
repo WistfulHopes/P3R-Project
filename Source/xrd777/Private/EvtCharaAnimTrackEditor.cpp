@@ -77,6 +77,14 @@ const FSlateBrush* FEvtCharaAnimTrackEditor::GetIconBrush() const
 
 void FEvtCharaAnimTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
 	UMovieSceneEvtCharaAnimationTrack* CastTrack = Cast<UMovieSceneEvtCharaAnimationTrack>(Track);
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("AddEvtCharaAnimTrack_SetEvtManagerBinding", "Set EVT Manager Binding"),
+		LOCTEXT("AddEvtCharaAnimTrackTooltip_SetEvtManagerBinding", "[Persona 3 Reload] Needed for conditional tracks to work properly"),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FEvtCharaAnimTrackEditor::SetEvtManagerBindingID, CastTrack)
+		)
+	);
 	MenuBuilder.AddSubMenu(
 		LOCTEXT("EvtCharaAnimEditConditionalBrach", "Conditional Data"),
 		FText(),
@@ -94,6 +102,21 @@ void FEvtCharaAnimTrackEditor::BuildEventConditionalBranchMenu(FMenuBuilder& Bui
 	);
 	DetailsView->SetObject(Track);
 	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
+}
+
+void FEvtCharaAnimTrackEditor::SetEvtManagerBindingID(UMovieSceneEvtCharaAnimationTrack* Track) {
+	UMovieScene* CurrMovieScene = GetFocusedMovieScene();
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < CurrMovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = CurrMovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
+	if (EvtManagerGuid.IsValid()) {
+		Track->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+	}
+	CurrMovieScene->MarkPackageDirty();
 }
 
 // Callbacks
@@ -118,8 +141,20 @@ void FEvtCharaAnimTrackEditor::HandleAddEvtCharaAnimTrackMenuEntryExecute(TArray
 	}
 
 	check(NewTracks.Num() != 0);
+
+	// look for event manager
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < MovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = MovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
 	for (UMovieSceneEvtCharaAnimationTrack* NewTrack : NewTracks) {
 		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Chara Anim"));
+		if (EvtManagerGuid.IsValid()) {
+			NewTrack->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+		}
 	}
 }
 

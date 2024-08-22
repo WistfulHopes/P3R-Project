@@ -58,8 +58,19 @@ void FEvtScriptTrackEditor::HandleAddEvtScriptTrackMenuEntryExecute(TArray<FGuid
 	}
 
 	check(NewTracks.Num() != 0);
+	// look for event manager
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < MovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = MovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
 	for (UMovieSceneEvtScriptTrack* NewTrack : NewTracks) {
 		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Script"));
+		if (EvtManagerGuid.IsValid()) {
+			NewTrack->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+		}
 	}
 }
 
@@ -98,6 +109,14 @@ void FEvtScriptTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilde
 }
 void FEvtScriptTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
 	auto* CastTrack = Cast<UMovieSceneEvtScriptTrack>(Track);
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("AddEvtCharaAnimTrack_SetEvtManagerBinding", "Set EVT Manager Binding"),
+		LOCTEXT("AddEvtCharaAnimTrackTooltip_SetEvtManagerBinding", "[Persona 3 Reload] Needed for conditional tracks to work properly"),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FEvtScriptTrackEditor::SetEvtManagerBindingID, CastTrack)
+		)
+	);
 	MenuBuilder.AddSubMenu(
 		LOCTEXT("EvtDialogueEditConditionalBrach", "Conditional Data"), FText(),
 		FNewMenuDelegate::CreateRaw(this, &FEvtScriptTrackEditor::BuildEventConditionalBranchMenu, CastTrack),
@@ -113,6 +132,21 @@ void FEvtScriptTrackEditor::BuildEventConditionalBranchMenu(FMenuBuilder& Builde
 	);
 	DetailsView->SetObject(DialogTrack);
 	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
+}
+
+void FEvtScriptTrackEditor::SetEvtManagerBindingID(UMovieSceneEvtScriptTrack* Track) {
+	UMovieScene* CurrMovieScene = GetFocusedMovieScene();
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < CurrMovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = CurrMovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
+	if (EvtManagerGuid.IsValid()) {
+		Track->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+	}
+	CurrMovieScene->MarkPackageDirty();
 }
 
 #undef LOCTEXT_NAMESPACE

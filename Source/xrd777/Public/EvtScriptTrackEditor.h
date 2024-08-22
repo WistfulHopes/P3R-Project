@@ -39,6 +39,7 @@ public:
 	virtual const FSlateBrush* GetIconBrush() const override;
 
 	void BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtScriptTrack* Track);
+	void SetEvtManagerBindingID(UMovieSceneEvtScriptTrack* Track);
 
 private:
 	void HandleAddEvtScriptTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);

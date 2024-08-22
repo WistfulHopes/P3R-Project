@@ -13,6 +13,7 @@
 //#include "Sequencer/Public/ISequencerSection.h"
 #include "EvtConditionBranchDetailsCustom.h"
 #include "IDetailsView.h"
+#include "MovieScene/Public/MovieSceneObjectBindingID.h"
 
 #define LOCTEXT_NAMESPACE "FEvtDialogueTrackEditor"
 
@@ -151,39 +152,35 @@ void FEvtDialogueTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuil
 
 void FEvtDialogueTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
 	UMovieSceneEvtDialogueTrack* DialogTrack = Cast<UMovieSceneEvtDialogueTrack>(Track);
-	/*
-	auto EvtConditionalBranchDelegate = [](FMenuBuilder& InnerMenuBuilder) {
-		InnerMenuBuilder.AddWidget(
-			SNew(SBox)
-			.WidthOverride(200.0f)
-			.HeightOverride(200.0f)
-			.Padding(FMargin(5.0f, 5.0f))
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.VAlign(VAlign_Center)
-				.AutoWidth()
-				[
-					SNew(STextBlock).Text(FText::FromString(TEXT("Conditional Branch WIP (Slot 1)")))
-				]
-				+ SHorizontalBox::Slot()
-				.VAlign(VAlign_Center)
-				.AutoWidth()
-				[
-					SNew(STextBlock).Text(FText::FromString(TEXT("Conditional Branch WIP (Slot 2)")))
-				]
-			],
-			FText::GetEmpty(), true, false
-		);
-	};
-	*/
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("AddEvtDialogueTrack_SetEvtManagerBinding", "Set EVT Manager Binding"),
+		LOCTEXT("AddEvtDialogueTrackTooltip_SetEvtManagerBinding", "[Persona 3 Reload] Needed for conditional tracks to work properly"),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FEvtDialogueTrackEditor::EvtDialogueTrackSetEvtManagerBindingID, DialogTrack)
+		)
+	);
 	MenuBuilder.AddSubMenu(
 		LOCTEXT("EvtDialogueEditConditionalBrach", "Conditional Data"), 
 		FText(), 
-		//FNewMenuDelegate::CreateLambda(EvtConditionalBranchDelegate),
 		FNewMenuDelegate::CreateRaw(this, &FEvtDialogueTrackEditor::BuildEventConditionalBranchMenu, DialogTrack),
 		false,
 		FSlateIcon());
+}
+
+void FEvtDialogueTrackEditor::EvtDialogueTrackSetEvtManagerBindingID(UMovieSceneEvtDialogueTrack* DialogTrack) {
+	UMovieScene* CurrMovieScene = GetFocusedMovieScene();
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < CurrMovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = CurrMovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
+	if (EvtManagerGuid.IsValid()) {
+		DialogTrack->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+	}
+	CurrMovieScene->MarkPackageDirty();
 }
 
 void FEvtDialogueTrackEditor::BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtDialogueTrack* DialogTrack) {
@@ -236,8 +233,21 @@ void FEvtDialogueTrackEditor::HandleAddEvtDialogueTrackMenuEntryExecute(TArray<F
 	}
 
 	check(NewTracks.Num() != 0);
+
+	// look for event manager
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < MovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = MovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
+
 	for (UMovieSceneEvtDialogueTrack* NewTrack : NewTracks) {
 		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Dialog"));
+		if (EvtManagerGuid.IsValid()) {
+			NewTrack->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+		}
 	}
 }
 

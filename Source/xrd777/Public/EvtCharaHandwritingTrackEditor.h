@@ -45,6 +45,7 @@ public:
 private:
 	void HandleAddEvtCharaHandwritingTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);
 	bool HandleAddEvtCharaHandwritingTrackMenuEntryCanExecute() const;
+	void SetEvtManagerBindingID(UMovieSceneEvtCharaHandwritingTrack* Track);
 };
 
 #endif

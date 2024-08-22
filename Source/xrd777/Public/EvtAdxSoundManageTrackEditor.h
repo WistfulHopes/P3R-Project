@@ -34,10 +34,13 @@ public:
 	virtual bool SupportsSequence(UMovieSceneSequence* InSequence) const override;
 	virtual bool SupportsType(TSubclassOf<UMovieSceneTrack> Type) const override;
 	virtual const FSlateBrush* GetIconBrush() const override;
+	virtual void BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) override;
 
 private:
 	void HandleAddEvtAdxSoundManageTrackMenuEntryExecute();
 	bool HandleAddEvtAdxSoundManageTrackMenuEntryCanExecute() const;
+
+	void BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtAdxSoundManageTrack* Track);
 };
 
 #endif

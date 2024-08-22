@@ -39,6 +39,7 @@ public:
 
 	virtual void BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track);
 	void BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtSeqControllerTrack* Track);
+	void SetEvtManagerBindingID(UMovieSceneEvtSeqControllerTrack* Track);
 
 private:
 	void HandleAddEvtSeqControlTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);

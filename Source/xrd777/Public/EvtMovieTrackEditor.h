@@ -38,6 +38,10 @@ public:
 	virtual bool SupportsType(TSubclassOf<UMovieSceneTrack> Type) const override;
 	virtual const FSlateBrush* GetIconBrush() const override;
 
+	virtual void BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) override;
+	void BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtMovieTrack* Track);
+	void SetEvtManagerBindingID(UMovieSceneEvtMovieTrack* Track);
+
 private:
 	void HandleAddEvtMovieTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);
 	bool HandleAddEvtMovieTrackMenuEntryCanExecute() const;

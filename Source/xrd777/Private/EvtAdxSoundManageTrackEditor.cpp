@@ -7,6 +7,7 @@
 
 #include "EvtAdxSoundManageTrackEditor.h"
 #include "Core/Public/Math/RangeBound.h"
+#include "EvtConditionBranchDetailsCustom.h"
 
 #define LOCTEXT_NAMESPACE "FEvtAdxSoundManageTrackEditor"
 
@@ -42,11 +43,6 @@ void FEvtAdxSoundManageTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder)
 }
 
 bool FEvtAdxSoundManageTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const {
-	/*
-	ETrackSupport TrackSupported = InSequence ? InSequence->IsTrackSupported(UMovieSceneEvtAdxSoundFadeTrack::StaticClass()) : ETrackSupport::NotSupported;
-	return TrackSupported == ETrackSupport::Supported;
-	*/
-	//InSequence->IsA<
 	return true; // lol
 }
 
@@ -59,6 +55,29 @@ const FSlateBrush* FEvtAdxSoundManageTrackEditor::GetIconBrush() const
 	return FEditorStyle::GetBrush("Sequencer.Tracks.Audio");
 }
 
+void FEvtAdxSoundManageTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
+	/*
+	UMovieSceneEvtAdxSoundManageTrack* CastTrack = Cast<UMovieSceneEvtAdxSoundManageTrack>(Track);
+	MenuBuilder.AddSubMenu(
+		LOCTEXT("EvtDialogueEditConditionalBrach", "Conditional Data"),
+		FText(),
+		FNewMenuDelegate::CreateRaw(this, &FEvtAdxSoundManageTrackEditor::BuildEventConditionalBranchMenu, CastTrack),
+		false,
+		FSlateIcon());
+	*/
+}
+
+void FEvtAdxSoundManageTrackEditor::BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtAdxSoundManageTrack* Track) {
+	FDetailsViewArgs DetailViewArgs = FDetailsViewArgs(false, false, false, FDetailsViewArgs::ActorsUseNameArea, true, nullptr, false, FName());
+	TSharedRef<IDetailsView> DetailsView = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor").CreateDetailView(DetailViewArgs);
+	DetailsView->RegisterInstancedCustomPropertyLayout(
+		UMovieSceneEvtAdxSoundManageTrack::StaticClass(),
+		FOnGetDetailCustomizationInstance::CreateLambda([Track] { return FEvtConditionBranchDetailsCustom::MakeInstance(*Track); })
+	);
+	DetailsView->SetObject(Track);
+	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
+}
+
 // Callbacks
 
 void FEvtAdxSoundManageTrackEditor::HandleAddEvtAdxSoundManageTrackMenuEntryExecute() {
@@ -66,44 +85,21 @@ void FEvtAdxSoundManageTrackEditor::HandleAddEvtAdxSoundManageTrackMenuEntryExec
 	if (MovieScene == nullptr || MovieScene->IsReadOnly()) {
 		return;
 	}
-	/*UMovieSceneTrack* SoundFadeTrack = MovieScene->FindMasterTrack<UMovieSceneEvtAdxSoundManageTrack>();
-	if (SoundFadeTrack != nullptr) {
-		return;
-	}
-	*/
 	const FScopedTransaction Transaction(LOCTEXT("AddEvtAdxSoundManageTrack_Transaction", "P3RE Event ADX Sound Manage Track"));
 	MovieScene->Modify();
 	UMovieSceneEvtAdxSoundManageTrack* NewTrack = MovieScene->AddMasterTrack<UMovieSceneEvtAdxSoundManageTrack>();
 	ensure(NewTrack);
 	UMovieSceneSection* NewSection = NewTrack->CreateNewSection();
-	/*
-	if (NewSection->SectionRange.Value.HasLowerBound()) {
-		NewSection->SectionRange.Value.SetLowerBound(TRangeBound<FFrameNumber>::Open());
-	}
-	if (NewSection->SectionRange.Value.HasUpperBound()) {
-		NewSection->SectionRange.Value.SetUpperBound(TRangeBound<FFrameNumber>::Open());
-	}
-	*/
 	NewTrack->AddSection(*NewSection);
 	if (GetSequencer().IsValid()) {
 		GetSequencer()->OnAddTrack(NewTrack, FGuid());
 	}
-	/*SoundFadeTrack = FindOrCreateMasterTrack<UMovieSceneEvtAdxSoundManageTrack>().Track;
-	check(SoundFadeTrack);
-	UMovieSceneSection* NewSection = SoundFadeTrack->CreateNewSection();
-	check(NewSection);
-	SoundFadeTrack->AddSection(*NewSection);
-	if (GetSequencer().IsValid()) {
-		GetSequencer()->OnAddTrack(SoundFadeTrack, FGuid());
-	}
-	*/
 }
 
 bool FEvtAdxSoundManageTrackEditor::HandleAddEvtAdxSoundManageTrackMenuEntryCanExecute() const
 {
 	UMovieScene* FocusedMovieScene = GetFocusedMovieScene();
 	return FocusedMovieScene != nullptr;
-	//return ((FocusedMovieScene != nullptr) && (FocusedMovieScene->FindMasterTrack<UMovieSceneEvtAdxSoundManageTrack>() == nullptr));
 }
 
 #undef LOCTEXT_NAMESPACE

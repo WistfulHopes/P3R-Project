@@ -45,6 +45,7 @@ public:
 private:
 	void HandleAddEvtCharaAnimTrackMenuEntryExecute(TArray<FGuid> InObjectBindingIds);
 	bool HandleAddEvtCharaAnimTrackMenuEntryCanExecute() const;
+	void SetEvtManagerBindingID(UMovieSceneEvtCharaAnimationTrack* Track);
 };
 
 #endif

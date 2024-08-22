@@ -35,6 +35,10 @@ public:
 	virtual bool SupportsType(TSubclassOf<UMovieSceneTrack> Type) const override;
 	virtual const FSlateBrush* GetIconBrush() const override;
 
+	virtual void BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) override;
+	void BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtFadeScreenTrack* Track);
+	void SetEvtManagerBindingID(UMovieSceneEvtFadeScreenTrack* Track);
+
 private:
 	void HandleAddEvtFadeScreenTrackMenuEntryExecute();
 	bool HandleAddEvtFadeScreenTrackMenuEntryCanExecute() const;

@@ -6,6 +6,7 @@
 
 #include "EvtAdxSoundTrackEditor.h"
 #include "Core/Public/Math/RangeBound.h"
+#include "EvtConditionBranchDetailsCustom.h"
 
 #define LOCTEXT_NAMESPACE "FEvtAdxSoundFadeEditor"
 
@@ -54,6 +55,29 @@ bool FEvtAdxSoundTrackEditor::SupportsType(TSubclassOf<UMovieSceneTrack> Type) c
 const FSlateBrush* FEvtAdxSoundTrackEditor::GetIconBrush() const
 {
 	return FEditorStyle::GetBrush("Sequencer.Tracks.Audio");
+}
+
+void FEvtAdxSoundTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
+	/*
+	UMovieSceneEvtAdxSoundTrack* CastTrack = Cast<UMovieSceneEvtAdxSoundTrack>(Track);
+	MenuBuilder.AddSubMenu(
+		LOCTEXT("EvtDialogueEditConditionalBrach", "Conditional Data"),
+		FText(),
+		FNewMenuDelegate::CreateRaw(this, &FEvtAdxSoundTrackEditor::BuildEventConditionalBranchMenu, CastTrack),
+		false,
+		FSlateIcon());
+	*/
+}
+
+void FEvtAdxSoundTrackEditor::BuildEventConditionalBranchMenu(FMenuBuilder& Builder, UMovieSceneEvtAdxSoundTrack* Track) {
+	FDetailsViewArgs DetailViewArgs = FDetailsViewArgs(false, false, false, FDetailsViewArgs::ActorsUseNameArea, true, nullptr, false, FName());
+	TSharedRef<IDetailsView> DetailsView = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor").CreateDetailView(DetailViewArgs);
+	DetailsView->RegisterInstancedCustomPropertyLayout(
+		UMovieSceneEvtAdxSoundTrack::StaticClass(),
+		FOnGetDetailCustomizationInstance::CreateLambda([Track] { return FEvtConditionBranchDetailsCustom::MakeInstance(*Track); })
+	);
+	DetailsView->SetObject(Track);
+	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
 }
 
 // Callbacks

@@ -80,6 +80,14 @@ const FSlateBrush* FEvtSeqTimeJumpControlTrackEditor::GetIconBrush() const
 
 void FEvtSeqTimeJumpControlTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
 	UMovieSceneEvtSeqTimeJumpControllerTrack* CastTrack = Cast<UMovieSceneEvtSeqTimeJumpControllerTrack>(Track);
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("AddEvtCharaAnimTrack_SetEvtManagerBinding", "Set EVT Manager Binding"),
+		LOCTEXT("AddEvtCharaAnimTrackTooltip_SetEvtManagerBinding", "[Persona 3 Reload] Needed for conditional tracks to work properly"),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FEvtSeqTimeJumpControlTrackEditor::SetEvtManagerBindingID, CastTrack)
+		)
+	);
 	MenuBuilder.AddSubMenu(
 		LOCTEXT("EvtCharaAnimEditConditionalBrach", "Conditional Data"),
 		FText(),
@@ -97,6 +105,21 @@ void FEvtSeqTimeJumpControlTrackEditor::BuildEventConditionalBranchMenu(FMenuBui
 	);
 	DetailsView->SetObject(Track);
 	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
+}
+
+void FEvtSeqTimeJumpControlTrackEditor::SetEvtManagerBindingID(UMovieSceneEvtSeqTimeJumpControllerTrack* Track) {
+	UMovieScene* CurrMovieScene = GetFocusedMovieScene();
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < CurrMovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = CurrMovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
+	if (EvtManagerGuid.IsValid()) {
+		Track->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+	}
+	CurrMovieScene->MarkPackageDirty();
 }
 
 // Callbacks
@@ -143,8 +166,19 @@ void FEvtSeqTimeJumpControlTrackEditor::HandleAddEvtSeqTimeJumpControlTrackMenuE
 	}
 
 	check(NewTracks.Num() != 0);
+	// look for event manager
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < MovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = MovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
 	for (UMovieSceneEvtSeqTimeJumpControllerTrack* NewTrack : NewTracks) {
 		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Time Jump Controller"));
+		if (EvtManagerGuid.IsValid()) {
+			NewTrack->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+		}
 	}
 }
 

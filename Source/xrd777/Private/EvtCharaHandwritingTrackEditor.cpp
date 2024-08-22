@@ -75,6 +75,14 @@ const FSlateBrush* FEvtCharaHandwritingTrackEditor::GetIconBrush() const
 
 void FEvtCharaHandwritingTrackEditor::BuildTrackContextMenu(FMenuBuilder& MenuBuilder, UMovieSceneTrack* Track) {
 	UMovieSceneEvtCharaHandwritingTrack* CastTrack = Cast<UMovieSceneEvtCharaHandwritingTrack>(Track);
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("AddEvtCharaHandwritingTrack_SetEvtManagerBinding", "Set EVT Manager Binding"),
+		LOCTEXT("AddEvtCharaHandwritingTrackTooltip_SetEvtManagerBinding", "[Persona 3 Reload] Needed for conditional tracks to work properly"),
+		FSlateIcon(),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FEvtCharaHandwritingTrackEditor::SetEvtManagerBindingID, CastTrack)
+		)
+	);
 	MenuBuilder.AddSubMenu(
 		LOCTEXT("EvtCharaAnimEditConditionalBrach", "Conditional Data"),
 		FText(),
@@ -92,6 +100,21 @@ void FEvtCharaHandwritingTrackEditor::BuildEventConditionalBranchMenu(FMenuBuild
 	);
 	DetailsView->SetObject(Track);
 	Builder.AddWidget(DetailsView, FText::GetEmpty(), true);
+}
+
+void FEvtCharaHandwritingTrackEditor::SetEvtManagerBindingID(UMovieSceneEvtCharaHandwritingTrack* Track) {
+	UMovieScene* CurrMovieScene = GetFocusedMovieScene();
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < CurrMovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = CurrMovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
+	if (EvtManagerGuid.IsValid()) {
+		Track->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+	}
+	CurrMovieScene->MarkPackageDirty();
 }
 
 // Callbacks
@@ -116,8 +139,21 @@ void FEvtCharaHandwritingTrackEditor::HandleAddEvtCharaHandwritingTrackMenuEntry
 	}
 
 	check(NewTracks.Num() != 0);
+
+	// look for event manager
+	FGuid EvtManagerGuid;
+	for (int i = 0; i < MovieScene->GetPossessableCount(); i++) {
+		auto CurrPossessable = MovieScene->GetPossessable(i);
+		if (CurrPossessable.GetPossessedObjectClass()->GetDefaultObject()->IsA<AAtlEvtEventManager>()) {
+			EvtManagerGuid = CurrPossessable.GetGuid();
+		}
+	}
+
 	for (UMovieSceneEvtCharaHandwritingTrack* NewTrack : NewTracks) {
 		NewTrack->SetDisplayName(LOCTEXT("TrackName", "Evt Chara Handwriting"));
+		if (EvtManagerGuid.IsValid()) {
+			NewTrack->CondBranchData.EvtManagerBindingID = FMovieSceneObjectBindingID(UE::MovieScene::FRelativeObjectBindingID(EvtManagerGuid));
+		}
 	}
 }
 
