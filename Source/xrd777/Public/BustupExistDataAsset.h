@@ -20,7 +20,7 @@ public:
     UBustupExistDataAsset();
 public:
     UFUNCTION(BlueprintCallable)
-    bool GetBustupParameters(int32 Character, int32 Face, int32 Clothes, FString& Pose, int32& EyePartsID, int32& MouthPartsID, FVector2D& EyePos, FVector2D& MouthPos, FVector2D& BlushPos, FVector2D& SweatPos, FVector2D& Offset);
+    bool GetBustupParameters(int32 Character, int32 Face, int32 Clothes, FString& Pose, int32& EyePartsID, int32& MouthPartsID, FVector2D& EyePos, FVector2D& MouthPos, FVector2D& BlushPos, FVector2D& SweatPos, FVector2D& Offset, int32& ClothOut);
 
     UFUNCTION(BlueprintCallable)
     UTexture2D* GetPoseTexture(int32 CharacterID, int32 ClothID, const FString& PoseName);
@@ -33,5 +33,7 @@ public:
 
     UFUNCTION(BlueprintCallable)
     UTexture2D* GetBustupTexturePart(int32 CharacterID, const FString& Filename);
+
+    FString GetCharacterType(int32 CharacterId);
 };
 

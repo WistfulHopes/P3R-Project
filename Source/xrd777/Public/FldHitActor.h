@@ -12,7 +12,7 @@ UCLASS(Blueprintable)
 class XRD777_API AFldHitActor : public AFldHitCore {
     GENERATED_BODY()
 public:
-protected:
+//protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     int32 mMajorID_;
     

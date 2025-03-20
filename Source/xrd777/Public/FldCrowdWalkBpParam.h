@@ -17,5 +17,6 @@ public:
     TArray<FFldCrowdWalkFollowParam> mFollowList;
     
     XRD777_API FFldCrowdWalkBpParam();
+    XRD777_API FFldCrowdWalkBpParam(const TSubclassOf<AMobWalkCharaBaseCore>& InClass);
 };
 

@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "MovieSceneSection.h"
 #include "MovieSceneEvtAdxSoundSectionData.h"
+#include <MovieScene/Public/Channels/MovieSceneChannelProxy.h>
 #include "MovieSceneEvtAdxSoundSection.generated.h"
 
 UCLASS(Blueprintable, MinimalAPI)
@@ -10,7 +11,9 @@ class UMovieSceneEvtAdxSoundSection : public UMovieSceneSection {
 public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FMovieSceneEvtAdxSoundSectionData EventData;
-    
-    UMovieSceneEvtAdxSoundSection();
-};
 
+    UMovieSceneEvtAdxSoundSection();
+    
+public:
+    virtual EMovieSceneChannelProxyType CacheChannelProxy() override;
+};

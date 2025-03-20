@@ -14,6 +14,7 @@
 #include "EvtConditionBranchDetailsCustom.h"
 #include "IDetailsView.h"
 #include "MovieScene/Public/MovieSceneObjectBindingID.h"
+#include <Sequencer/Public/SequencerUtilities.h>
 
 #define LOCTEXT_NAMESPACE "FEvtDialogueTrackEditor"
 
@@ -27,48 +28,9 @@ public:
 	{}
 
 	// ISequencerSection interface
-	//virtual bool RequestDeleteCategory(const TArray<FName>& CategoryNamePath) override;
-	//virtual bool RequestDeleteKeyArea(const TArray<FName>& KeyAreaNamePath) override;
 
 	virtual int32 OnPaintSection(FSequencerSectionPainter& Painter) const override {
 		int32 LayerId = Painter.PaintSectionBackground();
-		// even though this isn't a keyfraem track (if atlus had done that it would've shown in the header dump), we'll still draw the message positions
-		// for convenience
-		const FSlateBrush* CircleMsgBrush = FEditorStyle::GetBrush("Sequencer.KeyCircle");
-		const UMovieSceneEvtDialogueSection& DialogSection = *CastChecked<UMovieSceneEvtDialogueSection>(WeakSection);
-		//const FMovieSceneEvtDialogueSectionData& DialogSectionEvents = DialogSection.EventData;
-
-		FTimeToPixel TimeConverter = Painter.GetTimeConverter();
-		FFrameRate TickResolution = TimeConverter.GetTickResolution();
-		/*
-		FSlateDrawElement::MakeText(
-			Painter.DrawElements,
-			Painter.LayerId + 1,
-			Painter.SectionGeometry.ToPaintGeometry(),
-			FText::Format(LOCTEXT("EvtDialogueTrackEditorDrawTest", "Test")),
-			FStyleDefaults::GetFontInfo()
-		);
-		*/
-		/*
-		FSlateDrawElement::MakeBox(
-			Painter.DrawElements,
-			Painter.LayerId + 1,
-			Painter.SectionGeometry.ToPaintGeometry(),
-			FCoreStyle::Get().GetBrush("GenericWhiteBox"),
-			ESlateDrawEffect::None,
-			FLinearColor(0, 1, 0, 1)
-		);
-		*/
-		/*
-		TArray<TTuple<FFrameNumber&, FEvtDialoguePayload&>> TimesToValues = TArray<TTuple<FFrameNumber&, FEvtDialoguePayload&>>();
-		if (DialogSection.EventData.GetTimes().Num() == DialogSection.EventData.GetValues().Num()) {
-
-		}
-		else {
-			
-		}
-		*/
-		// TODO: draw keyframes for events
 		return LayerId + 1;
 	}
 
@@ -86,12 +48,6 @@ TSharedRef<ISequencerTrackEditor> FEvtDialogueTrackEditor::CreateTrackEditor(TSh
 
 FEvtDialogueTrackEditor::FEvtDialogueTrackEditor(TSharedRef<ISequencer> InSequencer)
 	: FMovieSceneTrackEditor(InSequencer) {}
-
-// Keyframe ctor
-/*
-FEvtDialogueTrackEditor::FEvtDialogueTrackEditor(TSharedRef<ISequencer> InSequencer)
-	: FKeyframeTrackEditor<UMovieSceneEvtDialogueTrack>(InSequencer) {}
-*/
 // Methods
 
 // Requires making MovieSceneEvtDialogueSection (also all Evt tracks only have one section)
@@ -105,19 +61,6 @@ FMovieSceneEvalTemplatePtr FEvtDialogueTrackEditor::CreateTemplateForSection(con
 	return FMovieSceneEvtDialogueSectionTemplate(*CastChecked<UMovieSceneEvtDialogueSection>(&InSection));
 }
 
-/* Dialogue tracks should be children of Atlus Event Manager
-void FEvtDialogueTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder) {
-	MenuBuilder.AddMenuEntry(
-		LOCTEXT("AddEvtDialogueTrack", "Atlus Event Dialogue Track"),
-		LOCTEXT("AddEvtDialogueTrackTooltip", "TODO: Description"),
-		FSlateIcon(FEditorStyle::GetStyleSetName(), "Sequencer.Tracks.Audio"),
-		FUIAction(
-			FExecuteAction::CreateRaw(this, &FEvtDialogueTrackEditor::HandleAddEvtDialogueTrackMenuEntryExecute),
-			FCanExecuteAction::CreateRaw(this, &FEvtDialogueTrackEditor::HandleAddEvtDialogueTrackMenuEntryCanExecute)
-		)
-	);
-}
-*/
 
 void FEvtDialogueTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& MenuBuilder, const TArray<FGuid>& ObjectBindings, const UClass* ObjectClass) {
 	// put dialog tracks in BP_AtlEvtEventManager_C bindings only
@@ -229,6 +172,7 @@ void FEvtDialogueTrackEditor::HandleAddEvtDialogueTrackMenuEntryExecute(TArray<F
 			check(NewDialogSection);
 			NewDialogObjectTrack->AddSection(*NewDialogSection);
 			GetSequencer()->OnAddTrack(NewDialogObjectTrack, InObjectBindingId);
+			GetSequencer()->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemAdded);
 		}
 	}
 

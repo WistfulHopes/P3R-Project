@@ -12,5 +12,6 @@ public:
     FMovieSceneEvtAdxSoundManageSectionData EventData;
     
     UMovieSceneEvtAdxSoundManageSection();
+public:
+    virtual EMovieSceneChannelProxyType CacheChannelProxy() override;
 };
-

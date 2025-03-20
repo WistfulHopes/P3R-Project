@@ -11,6 +11,7 @@
 #include <CharacterBase/Public/NpcBaseCore.h>
 #include <Xrd777/Public/AppPropsCore.h>
 #include "EvtConditionBranchDetailsCustom.h"
+#include "HandwritingSpawner.h"
 
 #define LOCTEXT_NAMESPACE "FEvtCharaHandwritingTrackEditor"
 
@@ -40,7 +41,8 @@ void FEvtCharaHandwritingTrackEditor::BuildObjectBindingTrackMenu(FMenuBuilder& 
 				(
 					BindingObject->IsA(ACharacterBaseCore::StaticClass()) ||
 					BindingObject->IsA(ANpcBaseCore::StaticClass()) ||
-					BindingObject->IsA(AAppPropsCore::StaticClass())
+					BindingObject->IsA(AAppPropsCore::StaticClass()) ||
+					BindingObject->IsA(AHandwritingSpawner::StaticClass())
 					)) {
 				bIsEvtCharacter = true;
 				EvtCharacters.Add(Binding);

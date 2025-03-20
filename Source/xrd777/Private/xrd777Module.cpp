@@ -25,6 +25,12 @@
 #include <EvtScriptTrackEditor.h>
 #include <EvtSeqControlTrackEditor.h>
 #include <EvtSeqTimeJumpControlTrackEditor.h>
+#include <MovieSceneEvtAdxSoundFadeSection.h>
+#include <MovieSceneEvtAdxSoundManageSection.h>
+#include <MovieSceneEvtFadeScreenSection.h>
+#include <MovieSceneEvtScriptSection.h>
+#include <MovieSceneEvtSeqControllerSection.h>
+#include <MovieSceneEvtSeqTimeJumpControllerSection.h>
 
 #include <ISettingsModule.h>
 #include <DesktopPlatformModule.h>
@@ -104,6 +110,22 @@
 #include "UnrealEd/Public/ObjectTools.h"
 #include "Misc/MessageDialog.h"
 #include "ContentBrowser/Public/ContentBrowserMenuContexts.h"
+#include "Xrd777EditImportFbn.h"
+#include "Xrd777EditImportFtd.h"
+
+#include "Xrd777/Public/FldHitActor.h"
+#include "Xrd777/Public/FldHitActorBOX.h"
+#include "Xrd777/Public/FldHitNameTableRow.h"
+#include "Xrd777/Public/FldNpcNameTableRow.h"
+#include "Xrd777EditImportFntBin.h"	
+#include "FldNpcActor.h"
+#include "Xrd777EditImportClt.h"
+#include "FldCrowdWalkManager.h"
+#include "FldCrowdTarget.h"
+#include "MobWalkCharaBaseCore.h"
+
+#include "ISequencerChannelInterface.h"
+#include "SequencerChannelInterface.h"
 
 #define LOCTEXT_NAMESPACE "FXrd777Module"
 
@@ -134,6 +156,23 @@ void FXrd777RiriModule::StartupModule() {
 	EvtScriptTrackEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FEvtScriptTrackEditor::CreateTrackEditor));
 	EvtSeqControlTrackEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FEvtSeqControlTrackEditor::CreateTrackEditor));
 	EvtSeqTimeJumpControlTrackEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FEvtSeqTimeJumpControlTrackEditor::CreateTrackEditor));
+
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtAdxSoundFadeSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtAdxSoundManageSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtAdxSoundSectionData>();
+
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtCharaAnimationSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtCharaHandwritingSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtCharaOperationControllerSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtCharaPropAttachSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtDialogueSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtFadeScreenSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtFieldAnimationSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtMessageSubtitleSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtMovieSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtScriptSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtSeqControllerSectionData>();
+	SequencerModule.RegisterChannelInterface<FMovieSceneEvtSeqTimeJumpControllerSectionData>();
 	// Xrd777 Edit Tools
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FXrd777RiriModule::RegisterMenus));
 
@@ -228,18 +267,15 @@ void FXrd777RiriModule::RegisterMenus() {
 					FExecuteAction::CreateLambda([this, DataContextObject]() { OnRemoveMeshNamePrefix(DataContextObject); })
 				)
 			);
-			/*
 			LevelSection.AddMenuEntry(
-				"AssetUncooker",
-				LOCTEXT("Xrd777EditUncookerLabel", "Mass uncook assets"),
-				LOCTEXT("Xrd777EditUncookerTooltip", "Automatically uncooks assets in the given folder by duplicating and renaming"),
-				//FSlateIcon(FEditorStyle::GetStyleSetName(), ),
+				"P5ImportFbn",
+				LOCTEXT("Xrd777EditImportFbn", "[Persona 5] Make level from FBN"),
+				LOCTEXT("Xrd777EditImportFbnTooltip", "Import FBN"),
 				FSlateIcon(),
 				FUIAction(
-					FExecuteAction::CreateLambda([this, DataContextObject]() { UncookAssetsInFolder(DataContextObject); })
+					FExecuteAction::CreateLambda([this, DataContextObject]() { OnImportFbn(DataContextObject); })
 				)
 			);
-			*/
 		}
 	}));
 }
@@ -1200,6 +1236,442 @@ TSharedRef<SWidget> FXrd777RiriModule::CreateToolbarDropdown() {
 	MenuBuilder.EndSection();
 	*/
 	return MenuBuilder.MakeWidget();
+}
+
+void FXrd777RiriModule::OnImportFbn(UContentBrowserDataMenuContext_AddNewMenu* DataContextObject) {
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+
+	// Find DT_FldDungeonHitName (FLDPLACENAME.FTD)
+
+	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+	FString L10NLocale = TEXT("en");
+	FString FldDungeonHitNamePath = Utilities.GetInternationalFilePath(TEXT("Field/Data/DataTable/Texts/DT_FldDungeonHitName"), &L10NLocale);
+	Utilities.MakeIntoUnrealPath(FldDungeonHitNamePath);
+	FAssetData FldDungeonHitName = AssetRegistry.GetAssetByObjectPath(FName(FldDungeonHitNamePath));
+	if (!FldDungeonHitName.IsValid()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoFldDungeonHitName", "DT_FldDungeonHitName is missing"));
+		return;
+	}
+	UDataTable* FldDngHitName = (UDataTable*)FldDungeonHitName.GetAsset();
+	int32 CurrentHighestKinId = 0;
+	TMap<FString, FName> FldDngHitNameToKin;
+	for (FName DngHitKin : FldDngHitName->GetRowNames()) {
+		int32 CurrentKinId = FCString::Atoi(*DngHitKin.ToString().RightChop(4));
+		if (CurrentHighestKinId < CurrentKinId) CurrentHighestKinId = CurrentKinId;
+		FldDngHitNameToKin.Add(FldDngHitName->FindRow<FFldHitNameTableRow>(DngHitKin, TEXT(""))->Name, DngHitKin);
+	}
+	// Find DT_FldDailyHitName (FLDCHECKNAME.FTD)
+	FString FldDailyHitNamePath = Utilities.GetInternationalFilePath(TEXT("Field/Data/DataTable/Texts/DT_FldDailyHitName"), &L10NLocale);
+	Utilities.MakeIntoUnrealPath(FldDailyHitNamePath);
+	FAssetData FldDailyHitName = AssetRegistry.GetAssetByObjectPath(FName(FldDailyHitNamePath));
+	if (!FldDailyHitName.IsValid()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoFldDailyHitName", "DT_FldDailyHitName is missing"));
+		return;
+	}
+
+	// Find DT_FldNpcName (FLDNPCNAME.FTD)
+	FString FldNpcNameAssetPath = Utilities.GetInternationalFilePath(TEXT("Field/Data/DataTable/Texts/DT_FldNpcName"), &L10NLocale);
+	Utilities.MakeIntoUnrealPath(FldNpcNameAssetPath);
+	FAssetData FldNpcNameAsset = AssetRegistry.GetAssetByObjectPath(FName(FldNpcNameAssetPath));
+	if (!FldNpcNameAsset.IsValid()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoFldPlaceName", "DT_FldNpcName is missing"));
+		return;
+	}
+	UDataTable* FldNpcNametable = (UDataTable*)FldNpcNameAsset.GetAsset();
+	int32 CurrentHighestNpcKinId = 0;
+	TMap<FString, FName> FldNpcNameToKinId;
+	for (FName NpcHitKin : FldNpcNametable->GetRowNames()) {
+		int32 CurrentKinId = FCString::Atoi(*NpcHitKin.ToString().RightChop(4));
+		if (CurrentHighestNpcKinId < CurrentKinId) CurrentHighestNpcKinId = CurrentKinId;
+		FldNpcNameToKinId.Add(FldNpcNametable->FindRow<FFldNpcNameTableRow>(NpcHitKin, TEXT(""))->Name, NpcHitKin);
+	}
+
+	// Find BP_FldCrowdWalkManager
+	FString FldCrowdWalkManagerPath = Utilities.GetInternationalFilePath(TEXT("Blueprints/Field/Crowd/BP_FldCrowdWalkManager"), nullptr);
+	Utilities.MakeIntoUnrealPath(FldCrowdWalkManagerPath);
+	FAssetData FldCrowdWalkManagerAsset = AssetRegistry.GetAssetByObjectPath(FName(FldCrowdWalkManagerPath));
+	if (!FldCrowdWalkManagerAsset.IsValid()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoFldCrowdWalkManager", "BP_FldCrowdWalkManager is missing"));
+		return;
+	}
+
+	// Find BP_FldNpcMain and BP_FldNpcMob
+	FString FldNpcMainPath = Utilities.GetInternationalFilePath(TEXT("Blueprints/Field/Character/BP_FldNpcMain"), nullptr);
+	Utilities.MakeIntoUnrealPath(FldNpcMainPath);
+	FAssetData FldNpcMainAsset = AssetRegistry.GetAssetByObjectPath(FName(FldNpcMainPath));
+	if (!FldNpcMainAsset.IsValid()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoFldNpcMain", "BP_FldNpcMain is missing"));
+		return;
+	}
+	FString FldNpcMobPath = Utilities.GetInternationalFilePath(TEXT("Blueprints/Field/Character/BP_FldNpcMob"), nullptr);
+	Utilities.MakeIntoUnrealPath(FldNpcMobPath);
+	FAssetData FldNpcMobAsset = AssetRegistry.GetAssetByObjectPath(FName(FldNpcMobPath));
+	if (!FldNpcMobAsset.IsValid()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoFldNpcMob", "BP_FldNpcMob is missing"));
+		return;
+	}
+
+	// Use Saori Rankup as placeholder for interact
+	FString BpInteractPlayPath = Utilities.GetInternationalFilePath(TEXT("Blueprints/Field/CmmNpc/BP_NPC_Saori_Rank1_Play"), nullptr);
+	Utilities.MakeIntoUnrealPath(BpInteractPlayPath);
+	FAssetData BpInteractPlayAsset = AssetRegistry.GetAssetByObjectPath(FName(BpInteractPlayPath));
+	if (!BpInteractPlayAsset.IsValid()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoBpInteractPlay", "BP_NPC_Saori_Rank1_Play is missing"));
+		return;
+	}
+	// Use placeholder MC Walk
+	FString McWalkPath = Utilities.GetInternationalFilePath(TEXT("Blueprints/Characters/Mob/Walk/BP_MCWalk0012_100"), nullptr);
+	Utilities.MakeIntoUnrealPath(McWalkPath);
+	FAssetData McWalkAsset = AssetRegistry.GetAssetByObjectPath(FName(McWalkPath));
+	if (!McWalkAsset.IsValid()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoBpInteractPlay", "MC Walk is missing"));
+		return;
+	}
+
+	// Open dialog
+
+	IDesktopPlatform* Platform = FDesktopPlatformModule::Get();
+	TArray<FString> OpenedFiles;
+	FString LastDirectory = FEditorDirectories::Get().GetLastDirectory(ELastDirectory::GENERIC_IMPORT);
+	bool bSelected = false;
+
+	if (Platform) {
+		const void* ParentHWND = FSlateApplication::Get().FindBestParentWindowForDialogs(nullptr).Get()->GetNativeWindow().Get()->GetOSWindowHandle();
+		bSelected = Platform->OpenFileDialog(
+			ParentHWND,
+			TEXT("Select Persona 5 FBN"),
+			LastDirectory,
+			TEXT(""),
+			TEXT("*"),
+			EFileDialogFlags::None,
+			OpenedFiles
+		);
+	}
+	if (OpenedFiles.Num() == 0) {
+		return;
+	}
+	// We need to check that the files we'll reference exist as well, those being
+	// - the HTB file in FIELD/HIT
+	// - FLDPLACENAME.FTD
+	// - FLDCHECKNAME.FTD
+
+	FString FBNPath = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*OpenedFiles[0]);
+	FString FBNParentDir = TEXT("DATA/");
+	FString FBNBaseName = FPaths::GetBaseFilename(FBNPath);
+	FString HTBPath = FPaths::Combine(FBNPath.Left(FBNPath.Find(FBNParentDir)), TEXT("HIT"), FString::Printf(TEXT("%s.HTB"), *FBNBaseName));
+	FString BaseCpkDir = TEXT("BASE.CPK/");
+	FString FldPlaceNamePath = FPaths::Combine(FBNPath.Left(FBNPath.Find(BaseCpkDir)), TEXT("EN.CPK"), TEXT("FIELD"), TEXT("FTD"), TEXT("FLDPLACENAME.FTD"));
+	FString FldCheckNamePath = FPaths::Combine(FBNPath.Left(FBNPath.Find(BaseCpkDir)), TEXT("EN.CPK"), TEXT("FIELD"), TEXT("FTD"), TEXT("FLDCHECKNAME.FTD"));
+	FString FldNpcNamePath = FPaths::Combine(FBNPath.Left(FBNPath.Find(BaseCpkDir)), TEXT("EN.CPK"), TEXT("FIELD"), TEXT("FTD"), TEXT("FLDNPCNAME.FTD"));
+	FString FldNpcTablePath = FPaths::Combine(FBNPath.Left(FBNPath.Find(FBNParentDir)), TEXT("NPC"), FString::Printf(TEXT("FNT%s.BIN"), *FBNBaseName.RightChop(1)));
+	FString CltPath = FPaths::Combine(FBNPath.Left(FBNPath.Find(FBNParentDir)), TEXT("NPC"), FString::Printf(TEXT("%s.CLT"), *FBNBaseName.LeftChop(3)));
+
+	if (!IFileManager::Get().FileExists(*FBNPath)) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoP5FBN", "Persona 5 Royal FBN file is missing"));
+		return;
+	}
+	if (!IFileManager::Get().FileExists(*HTBPath)) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoP5HTB", "Persona 5 Royal HTB file is missing"));
+		return;
+	}
+	if (!IFileManager::Get().FileExists(*FldPlaceNamePath)) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoP5FldPlace", "Persona 5 Royal FLDPLACENAME.FTD is missing"));
+		return;
+	}
+	if (!IFileManager::Get().FileExists(*FldCheckNamePath)) {;
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoP5FldCheck", "Persona 5 Royal FLDCHECKNAME.FTD is missing"));
+		return;
+	}
+	if (!IFileManager::Get().FileExists(*FldNpcNamePath)) {;
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoP5FldNpc", "Persona 5 Royal FLDNPCNAME.FTD is missing"));
+		return;
+	}
+	if (!IFileManager::Get().FileExists(*FldNpcTablePath)) {;
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoP5Fnt", "Persona 5 Royal FNT file is missing"));
+		return;
+	}
+	/*
+	// Not all fields have crowd data (Leblanc is a good example!)
+	if (!IFileManager::Get().FileExists(*CltPath)) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("Xrd777EditFbnErrorNoP5Clt", "Persona 5 Royal CLT is missing"));
+		return;
+	}
+	*/
+
+	// Open the FBN file
+	Xrd777EditImportFbn FbnData = Xrd777EditImportFbn();
+	FbnData.ImportFbn(FBNPath);
+	// Open the HTB file
+	Xrd777EditImportFbn HtbData = Xrd777EditImportFbn();
+	HtbData.ImportFbn(HTBPath);
+	// Open FTD name files
+	Xrd777EditImportFtd FldPlaceName = Xrd777EditImportFtd();
+	FldPlaceName.ImportFtd(FldPlaceNamePath);
+	Xrd777EditImportFtd FldCheckName = Xrd777EditImportFtd();
+	FldCheckName.ImportFtd(FldCheckNamePath);
+	Xrd777EditImportFtd FldNpcName = Xrd777EditImportFtd();
+	FldNpcName.ImportFtd(FldNpcNamePath);
+	// Create hit map
+	Xrd777EditImportFntBin FldFntBin = Xrd777EditImportFntBin();
+	FldFntBin.ImportFnt(FldNpcTablePath);
+	// Create crowd layout table
+	Xrd777EditImportClt FldClt = Xrd777EditImportClt();
+	if (!IFileManager::Get().FileExists(*CltPath)) {
+		FldClt.ImportClt(CltPath);
+	}
+	
+	UWorldFactory* LevelFactory = NewObject<UWorldFactory>(UWorldFactory::StaticClass());
+	FString AssetPath = FPaths::Combine(DataContextObject->SelectedPaths[0].ToString(), TEXT("LV_F120_101_HitFbn"));
+	Utilities.MakeIntoUnrealPath(AssetPath);
+	TOptional<FPostAssetCreated> BlankCb;
+	UWorld* HitWorld = Cast<UWorld>(CreateAsset(AssetPath, UWorld::StaticClass(), LevelFactory, BlankCb));
+
+	// Add triggers
+	FFbnBlock* TriggerBlock = FbnData.FbnBlocks.FindByPredicate([](FFbnBlock& CurrBlock) { return CurrBlock.Type == EFbnListType::FBN_Trigger; });
+	FFbnBlock* HitBlock = HtbData.FbnBlocks.FindByPredicate([](FFbnBlock& CurrBlock) { return CurrBlock.Type == EFbnListType::FBN_Hit; });
+	if (TriggerBlock && HitBlock && TriggerBlock->BlockEntries.Num() == HitBlock->BlockEntries.Num()) {
+		int32 TriggerIndex = 0;
+		for (int i = 0; i < TriggerBlock->BlockEntries.Num(); i++) {
+			FFbnTriggerVolume* TriggerVolume = (FFbnTriggerVolume*)TriggerBlock->BlockEntries[i];
+			FFbnHitDefinition* HitEntry = (FFbnHitDefinition*)HitBlock->BlockEntries[i];
+			if (TriggerVolume->Shape != ETriggerShape::Cube) {
+				UE_LOG(LogRiriModule, Display, TEXT("TODO: Hit types that aren't boxes lol"));
+				continue;
+			}
+
+			FString TriggerPromptName;
+			switch (HitEntry->PromptType) {
+			case EXAMINE_fldCheckName0:
+			case EXAMINE_fldCheckName1:
+			case EXAMINE_fldCheckName2:
+			case EXAMINE_fldCheckName3:
+			case EXAMINE_fldCheckName4:
+			case STEAL_fldCheckName:
+			case SHOP_fldCheckName:
+				TriggerPromptName = FldCheckName.Table.Data[HitEntry->NameID];
+				UE_LOG(LogRiriModule, Display, TEXT("%s"), *FldCheckName.Table.Data[HitEntry->NameID]);
+				break;
+			case GO_fldPlaceName:
+				TriggerPromptName = FldPlaceName.Table.Data[HitEntry->NameID];
+				UE_LOG(LogRiriModule, Display, TEXT("%s"), *FldPlaceName.Table.Data[HitEntry->NameID]);
+				break;
+			}
+			if (TriggerPromptName.Len() == 0 || TriggerPromptName == TEXT("NULL")) {
+				UE_LOG(LogRiriModule, Display, TEXT("Trigger %d is null, skipping"));
+				continue;
+			}
+
+			AFldHitActorBOX* NewFldHitbox = Cast<AFldHitActorBOX>(HitWorld->SpawnActor(AFldHitActorBOX::StaticClass()));
+			NewFldHitbox->SetRootComponent(NewFldHitbox->RootComp_);
+			FString TriggerName = FString::Printf(TEXT("%s_FBN_Trigger%d"), *FBNBaseName, i);
+			NewFldHitbox->Rename(*TriggerName);
+			NewFldHitbox->SetActorLabel(TriggerName);
+			UE_LOG(LogRiriModule, Display, TEXT("Trigger %d center: %s"), i, *TriggerVolume->SphereCenter.ToString());
+			// Set location, size and rotation
+			// BoxExtents defauilt dimensions: 32
+			NewFldHitbox->SetActorLocation(FVector(TriggerVolume->SphereCenter.X, TriggerVolume->SphereCenter.Z, TriggerVolume->SphereCenter.Y));
+			NewFldHitbox->SetActorScale3D(FVector(TriggerVolume->SphereRadiusX / 16, TriggerVolume->SphereRadiusY / 16, 2));
+			FVector2D BoxDiff = FVector2D(TriggerVolume->CubeBottomRight.X - TriggerVolume->CubeBottomLeft.X, TriggerVolume->CubeBottomRight.Z - TriggerVolume->CubeBottomLeft.Z);
+			float BoxDP = FMath::Acos(BoxDiff.X / FMath::Sqrt(FMath::Square(BoxDiff.X) + FMath::Square(BoxDiff.Y))) * 180 / PI;
+			float BoxAngleDeg = BoxDiff.Y > 0 ? BoxDP : 360 - BoxDP;
+			float HitComAngleOffset = -90.0f;
+			NewFldHitbox->SetActorRotation(FRotator(0, HitComAngleOffset + BoxAngleDeg, 0));
+			NewFldHitbox->UpdateComponentTransforms();
+
+			// Set to the current field ID (for now)
+			NewFldHitbox->mMajorID_ = 120;
+			NewFldHitbox->mMinorID_ = 101;
+			// All in AreaChange for now (this uses DT_FldDungeonHitName)
+			NewFldHitbox->mType_ = EFldHitType::AreaChange;
+			if (TriggerPromptName.Len() > 0) {
+				if (FName* TargetKinId = FldDngHitNameToKin.Find(TriggerPromptName)) {
+					NewFldHitbox->mNameIndex_ = FCString::Atoi(*TargetKinId->ToString().RightChop(4));
+				}
+				else {
+					FFldHitNameTableRow NewRow;
+					NewRow.Name = TriggerPromptName;
+					CurrentHighestKinId++;
+					FName NewKinId = FName(FString::Printf(TEXT("KIN_%08d"), CurrentHighestKinId));
+					FldDngHitName->AddRow(NewKinId, NewRow);
+					FldDngHitNameToKin.Add(FldDngHitName->FindRow<FFldHitNameTableRow>(NewKinId, TEXT(""))->Name, NewKinId);
+					NewFldHitbox->mNameIndex_ = CurrentHighestKinId;
+				}
+			}
+			else {
+				NewFldHitbox->mNameIndex_ = 10000002;
+			}
+			float HitCompDebugArrowOffset = 0.0f;
+			// Convert hit register direction
+			switch (TriggerVolume->HitRegisterDirection) {
+				case AnyDirection:
+					NewFldHitbox->mHeroDirectType_ = FFldHitCoreHeroDirectType::None;
+					break;
+				case TowardsCenter:
+					NewFldHitbox->mHeroDirectType_ = FFldHitCoreHeroDirectType::Center;
+					break;
+				case Right:
+					NewFldHitbox->mHeroDirectType_ = FFldHitCoreHeroDirectType::Right;
+					//HitCompDebugArrowOffset = 180.0f;
+					HitCompDebugArrowOffset = 90.0f;
+					break;
+				case Front:
+					NewFldHitbox->mHeroDirectType_ = FFldHitCoreHeroDirectType::Front;
+					//HitCompDebugArrowOffset = 90.0f;
+					break;
+				case Left:
+					NewFldHitbox->mHeroDirectType_ = FFldHitCoreHeroDirectType::Left;
+					HitCompDebugArrowOffset = -90.0f;
+					break;
+				case Back:
+					NewFldHitbox->mHeroDirectType_ = FFldHitCoreHeroDirectType::Back;
+					//HitCompDebugArrowOffset = -90.0f;
+					HitCompDebugArrowOffset = 180.0f;
+					break;
+			}
+			NewFldHitbox->DirDebugComp_->AddRelativeRotation(FRotator(0, HitCompDebugArrowOffset, 0));
+			// Convert prompt type
+			switch (HitEntry->PromptType) {
+				case EXAMINE_fldCheckName0:
+				case EXAMINE_fldCheckName1:
+				case EXAMINE_fldCheckName2:
+				case EXAMINE_fldCheckName3:
+				case EXAMINE_fldCheckName4:
+					NewFldHitbox->mCheckIcon_ = EFldHitCoreCheckIconType::Check;
+					break;
+				case GO_Blank:
+				case GO_fldPlaceName:
+					NewFldHitbox->mCheckIcon_ = EFldHitCoreCheckIconType::Goto;
+					break;
+				case STEAL_fldCheckName:
+				case ACTION_fldActionName0:
+				case ACTION_fldActionName1:
+				case ACTION_fldActionName2:
+					NewFldHitbox->mCheckIcon_ = EFldHitCoreCheckIconType::Action;
+					break;
+				case TALK_fldNPCName:
+					NewFldHitbox->mCheckIcon_ = EFldHitCoreCheckIconType::Speak;
+					break;
+				case SHOP_fldCheckName:
+					NewFldHitbox->mCheckIcon_ = EFldHitCoreCheckIconType::Shop;
+					break;
+				default:
+					NewFldHitbox->mCheckIcon_ = EFldHitCoreCheckIconType::None;
+					break;
+			}
+			NewFldHitbox->mKeyPushBluePrint_ = Cast<UBlueprint>(BpInteractPlayAsset.GetAsset())->GeneratedClass;
+		}
+	}
+	// Add entrances
+	FFbnBlock* EntranceBlock = FbnData.FbnBlocks.FindByPredicate([](FFbnBlock& CurrBlock) { return CurrBlock.Type == EFbnListType::FBN_Entrance; });
+	if (EntranceBlock) {
+		for (int i = 0; i < EntranceBlock->BlockEntries.Num(); i++) {
+			FFbnEntrance* Entrance = (FFbnEntrance*)EntranceBlock->BlockEntries[i];
+			AFldPlayerStart* NewEntrance = Cast<AFldPlayerStart>(HitWorld->SpawnActor(AFldPlayerStart::StaticClass()));
+			FString EntranceName = FString::Printf(TEXT("%s_FBN_Entrance%d"), *FBNBaseName, i);
+			NewEntrance->Rename(*EntranceName);
+			NewEntrance->SetActorLabel(EntranceName);
+			NewEntrance->SetActorLocation(FVector(Entrance->Position.X, Entrance->Position.Z, Entrance->Position.Y + NewEntrance->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()));
+			float EntranceDPDeg = FMath::Acos(Entrance->Rotation.X) * 180 / PI;
+			float EntranceRot = Entrance->Rotation.Z > 0 ? EntranceDPDeg : 360 - EntranceDPDeg;
+			NewEntrance->SetActorRotation(FRotator(0, EntranceRot, 0));
+			NewEntrance->mIndex_ = Entrance->EntranceID;
+			NewEntrance->CameraDir->SetRelativeLocation(NewEntrance->GetActorLocation());
+		}
+	}
+	// Add interactable NPC data
+	FFbnBlock* NpcBlock = FbnData.FbnBlocks.FindByPredicate([](FFbnBlock& CurrBlock) { return CurrBlock.Type == EFbnListType::FBN_Npc; });
+	if (NpcBlock) {
+		for (int i = 0; i < NpcBlock->BlockEntries.Num(); i++) {
+			FFbnNpc* Npc = (FFbnNpc*)NpcBlock->BlockEntries[i];
+			if (Npc->PathNodes.Num() == 0 || FldFntBin.FntBlocks.Find(Npc->FNT_ID) == nullptr) {
+				continue;
+			}
+			// Check entry in FNT - we know that at least one entry exists, so check first one
+			FFNTEntry* CurrentFntEntry = FldFntBin.FntBlocks.Find(Npc->FNT_ID)->GetData();
+			FString CurrentNpcName = FldNpcName.Table.Data[CurrentFntEntry->npcTxtIdx];
+			if (CurrentNpcName == TEXT("TEMP")) {
+				continue; // At least until I find a way to hide the name...
+			}
+
+			AFldNpcActor* NpcActor = Cast<AFldNpcActor>(HitWorld->SpawnActor(AFldNpcActor::StaticClass()));
+			FString NpcName = FString::Printf(TEXT("%s_FBN_NPC%d"), *FBNBaseName, i);
+			NpcActor->Rename(*NpcName);
+			NpcActor->SetActorLabel(NpcName);
+			NpcActor->SetActorLocation(FVector(Npc->PathNodes[0].X, Npc->PathNodes[0].Z, Npc->PathNodes[0].Y));
+			float ActorDPDeg = FMath::Acos(Npc->NPCRotation.X) * 180 / PI;
+			float ActorRot = Npc->NPCRotation.Z > 0 ? ActorDPDeg : 360 - ActorDPDeg;
+			NpcActor->SetActorRotation(FRotator(0, ActorRot, 0));
+			NpcActor->mMajorID_ = 301;
+			NpcActor->mMinorID_ = i;
+			if (FName* TargetKinId = FldNpcNameToKinId.Find(CurrentNpcName)) {
+				NpcActor->mNameIndex_ = FCString::Atoi(*TargetKinId->ToString().RightChop(4));
+			}
+			else {
+				FFldNpcNameTableRow NewRow;
+				NewRow.Name = CurrentNpcName;
+				CurrentHighestNpcKinId++;
+				FName NewKinId = FName(FString::Printf(TEXT("KIN_%08d"), CurrentHighestNpcKinId));
+				FldNpcNametable->AddRow(NewKinId, NewRow);
+				FldNpcNameToKinId.Add(FldNpcNametable->FindRow<FFldNpcNameTableRow>(NewKinId, TEXT(""))->Name, NewKinId);
+				NpcActor->mNameIndex_ = CurrentHighestNpcKinId;
+			}
+			NpcActor->mCharaModelParam_[0].mMajorID = 14000;
+			NpcActor->mCharaModelParam_[0].mFbnNumber = 301;
+
+			NpcActor->mCharaBaseClass_ = Cast<UBlueprint>(FldNpcMainAsset.GetAsset())->GeneratedClass;
+			NpcActor->mNpcBaseClass_= Cast<UBlueprint>(FldNpcMobAsset.GetAsset())->GeneratedClass;
+			NpcActor->mKeyPushBluePrint_ = Cast<UBlueprint>(BpInteractPlayAsset.GetAsset())->GeneratedClass;
+		}
+	}
+	UPackage::Save(HitWorld->GetPackage(), HitWorld, RF_Public | RF_Standalone, *FPackageName::LongPackageNameToFilename(HitWorld->GetPackage()->GetPathName(), FPackageName::GetAssetPackageExtension()));
+
+
+	// Add crowd data (CLT)
+	if (FldClt.CrowdModels.Num() == 0) {
+		return;
+	}
+
+	FString CrowdAssetPath = FPaths::Combine(DataContextObject->SelectedPaths[0].ToString(), TEXT("LV_F120_101_CrowdTarget"));
+	Utilities.MakeIntoUnrealPath(CrowdAssetPath);
+	UWorld* MobWorld = Cast<UWorld>(CreateAsset(CrowdAssetPath, UWorld::StaticClass(), LevelFactory, BlankCb));
+
+	FString CrowdResrcPath = FPaths::Combine(DataContextObject->SelectedPaths[0].ToString(), TEXT("LV_F120_101_MobResrc"));
+	Utilities.MakeIntoUnrealPath(CrowdResrcPath);
+	UWorld* MobResrcWorld = Cast<UWorld>(CreateAsset(CrowdResrcPath, UWorld::StaticClass(), LevelFactory, BlankCb));
+
+	for (int i = 0; i < FldClt.CrowdModels.Num(); i++) {
+		if (FldClt.CrowdModels[i].spawnTime == 0.0f || FldClt.CrowdModels[i].spawnLimit == 0) {
+			// Idle CLT entry, ignore this for now, we'll add Idle mob later
+		}
+		else {
+			AFldCrowdWalkManager* CurrWalkManager = Cast<AFldCrowdWalkManager>(MobResrcWorld->SpawnActor(Cast<UBlueprint>(FldCrowdWalkManagerAsset.GetAsset())->GeneratedClass));
+			FString WalkManagerName = FString::Printf(TEXT("%s_CLT_Walk%d"), *FBNBaseName, i);
+			CurrWalkManager->Rename(*WalkManagerName);
+			CurrWalkManager->SetActorLabel(WalkManagerName);
+			FFldCrowdWalkRouteParam NewWalkRoute;
+			NewWalkRoute.mRoutePattern_ = EFldCrowdRoutePtn::Normal;
+			for (int j = 0; j < FldClt.CrowdModels[i].nodes.positions.Num(); j++) {
+				int32 NodeId = (i + 1) * 100 + j + 1;
+				FString CrowdTargetName = FString::Printf(TEXT("FldCrowdTarget%d"), NodeId);
+				AFldCrowdTarget* NewCrowdTarget = Cast<AFldCrowdTarget>(MobWorld->SpawnActor(AFldCrowdTarget::StaticClass()));
+				NewCrowdTarget->Rename(*CrowdTargetName);
+				NewCrowdTarget->SetActorLabel(CrowdTargetName);
+				FVector CurrNodePos = FldClt.CrowdModels[i].nodes.positions[j];
+				NewCrowdTarget->SetActorLocation(FVector(CurrNodePos.X, CurrNodePos.Z, CurrNodePos.Y));
+				NewCrowdTarget->mIndex_ = NodeId;
+				NewWalkRoute.mPointList.Add(NodeId);
+			}
+			CurrWalkManager->mRouteParam_.Add(NewWalkRoute);
+			CurrWalkManager->mMinTimer_ = FldClt.CrowdModels[i].spawnTime - (FldClt.CrowdModels[i].spawnTime * 0.1);
+			CurrWalkManager->mMaxTimer_ = FldClt.CrowdModels[i].spawnTime + (FldClt.CrowdModels[i].spawnTime * 0.1);
+			CurrWalkManager->mMobBpList_.Add(FFldCrowdWalkBpParam((TSubclassOf<AMobWalkCharaBaseCore>)((UBlueprint*)McWalkAsset.GetAsset())->GeneratedClass));
+		}
+	}
+	UPackage::Save(MobWorld->GetPackage(), MobWorld, RF_Public | RF_Standalone, *FPackageName::LongPackageNameToFilename(MobWorld->GetPackage()->GetPathName(), FPackageName::GetAssetPackageExtension()));
+	UPackage::Save(MobResrcWorld->GetPackage(), MobResrcWorld, RF_Public | RF_Standalone, *FPackageName::LongPackageNameToFilename(MobResrcWorld->GetPackage()->GetPathName(), FPackageName::GetAssetPackageExtension()));
 }
 
 #endif

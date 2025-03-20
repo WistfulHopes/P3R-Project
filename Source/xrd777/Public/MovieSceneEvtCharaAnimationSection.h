@@ -18,5 +18,7 @@ public:
     
 public:
     UMovieSceneEvtCharaAnimationSection();
+public:
+    virtual EMovieSceneChannelProxyType CacheChannelProxy() override;
 };
 

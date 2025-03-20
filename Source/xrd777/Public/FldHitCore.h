@@ -36,6 +36,11 @@ public:
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Instanced, meta=(AllowPrivateAccess=true))
     UShapeComponent* HitComp_;
+
+#if WITH_EDITORONLY_DATA
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Instanced, meta = (AllowPrivateAccess = true))
+    UPrimitiveComponent* DirDebugComp_;
+#endif
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     TSubclassOf<AUtlProcActor> mOverlapBluePrint_;

@@ -57,7 +57,7 @@ struct FEvtCharaAnimationExectionToken : IMovieSceneExecutionToken {
                         SlotNameStr = Entry.SlotName;
                         break;
                     }
-                    if (SlotNameStr != NAME_None) {
+                    if (SlotNameStr != NAME_None && AnimInst) {
                         if (Entry.AnimArray.Num() == 0) {
                             UAnimMontage* CurrMontage = nullptr;
                             switch (Entry.CharaAnimationType) {
@@ -75,7 +75,7 @@ struct FEvtCharaAnimationExectionToken : IMovieSceneExecutionToken {
                                     -1.0f,
                                     0.0f
                                 );
-                                if (CurrMontage && AnimInst) {
+                                if (CurrMontage) {
                                     AnimInst->Montage_Play(CurrMontage, Entry.PlayRate, EMontagePlayReturnType::MontageLength, Entry.EndOffset, true);
                                 }
                                 break;
@@ -93,7 +93,7 @@ struct FEvtCharaAnimationExectionToken : IMovieSceneExecutionToken {
                                     -1.0f,
                                     0.0f
                                 );
-                                if (CurrMontage && AnimInst) {
+                                if (CurrMontage) {
                                     AnimInst->Montage_Play(CurrMontage, Entry.PlayRate, EMontagePlayReturnType::MontageLength, Entry.EndOffset, true);
                                     FName DefaultName = FName("Default");
                                     AnimInst->Montage_SetNextSection(DefaultName, DefaultName);
@@ -116,9 +116,7 @@ struct FEvtCharaAnimationExectionToken : IMovieSceneExecutionToken {
                                 );
                                 break;
                             case EEvtCharaAnimationType::StopSlotAnimation:
-                                if (AnimInst) {
-                                    UBFLEventMovieScene::StopSlotAnimation(AnimInst, Entry.BlendOut, SlotNameStr);
-                                }
+                                UBFLEventMovieScene::StopSlotAnimation(AnimInst, Entry.BlendOut, SlotNameStr);
                                 break;
                             case EEvtCharaAnimationType::LoopAnimationSingleWithStartOffset:
                                 UBFLEventMovieScene::PlaySlotMultiAnimationOffsetAsDynamicMontageTwo(
@@ -162,9 +160,7 @@ struct FEvtCharaAnimationExectionToken : IMovieSceneExecutionToken {
                                 );
                             }
                             else if (Entry.CharaAnimationType == EEvtCharaAnimationType::StopSlotAnimation) {
-                                if (AnimInst) {
-                                    AnimInst->StopSlotAnimation(Entry.BlendOut);
-                                }
+                                AnimInst->StopSlotAnimation(Entry.BlendOut);
                             }
                         }
                     }

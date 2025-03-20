@@ -10,6 +10,8 @@ public:
     AFldLocalActor();
     UFUNCTION(BlueprintCallable)
     void CallStatePatternEndDelicate();
+
+    virtual void BeginPlay() override;
     
 };
 

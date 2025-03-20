@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "MovieSceneSection.h"
 #include "MovieSceneEvtCharaHandwritingSectionData.h"
+#include <MovieScene/Public/Channels/MovieSceneChannelProxy.h>
 #include "MovieSceneEvtCharaHandwritingSection.generated.h"
 
 UCLASS(Blueprintable, MinimalAPI)
@@ -12,5 +13,7 @@ public:
     FMovieSceneEvtCharaHandwritingSectionData EventData;
     
     UMovieSceneEvtCharaHandwritingSection();
+public:
+    virtual EMovieSceneChannelProxyType CacheChannelProxy() override;
 };
 

@@ -9,7 +9,7 @@ UCLASS(Blueprintable)
 class XRD777_API AFldCrowdTarget : public AMobWalkTarget {
     GENERATED_BODY()
 public:
-protected:
+//protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     int32 mIndex_;
     

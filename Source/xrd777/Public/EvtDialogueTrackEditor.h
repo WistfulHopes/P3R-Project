@@ -13,7 +13,6 @@
 
 class XRD777_API FEvtDialogueTrackEditor
 	: public FMovieSceneTrackEditor
-	//: public FKeyframeTrackEditor<UMovieSceneEvtDialogueTrack>
 {
 public:
 	/**
@@ -43,6 +42,7 @@ public:
 	virtual bool SupportsSequence(UMovieSceneSequence* InSequence) const override;
 	virtual bool SupportsType(TSubclassOf<UMovieSceneTrack> Type) const override;
 	virtual const FSlateBrush* GetIconBrush() const override;
+	//virtual TSharedPtr<SWidget> BuildOutlinerEditWidget(const FGuid& ObjectBinding, UMovieSceneTrack* Track, const FBuildEditWidgetParams& Params) override;
 
 	// EvtConditionalBranchMenu submenu
 	//TSharedRef<SWidget> BuildEventConditionalBranchMenu(UMovieSceneEvtDialogueTrack* DialogTrack);

@@ -23,6 +23,7 @@ void AFldHitCharacter::EndDelicate_ProcHeroPrevAction() {
 
 AFldHitCharacter::AFldHitCharacter() {
     this->CollisionComp_ = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollisionCylinder"));
+    this->CollisionComp_->AttachTo(this->RootComp_);
     this->mCharaModelParam_.AddDefaulted(1);
     this->mIconType_ = EFldHitCharaIconType::Normal;
     this->mIconPlural_ = false;

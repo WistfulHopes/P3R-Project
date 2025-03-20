@@ -4,6 +4,7 @@
 #include "MovieSceneSection.h"
 #include "MovieSceneEvtDialogueSectionData.h"
 #include <xrd777/Public/MovieSceneEvtConditionalBranchData.h>
+#include <MovieScene/Public/Channels/MovieSceneChannelProxy.h>
 #include "MovieSceneEvtDialogueSection.generated.h"
 
 UCLASS(Blueprintable, MinimalAPI)
@@ -21,5 +22,7 @@ private:
 public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true))
     FMovieSceneEvtConditionalBranchData CondBranchData;
-};
 
+public:
+    virtual EMovieSceneChannelProxyType CacheChannelProxy() override;
+};

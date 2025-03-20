@@ -9,7 +9,7 @@ UCLASS(Blueprintable)
 class XRD777_API AFldPlayerStart : public APlayerStart {
     GENERATED_BODY()
 public:
-protected:
+//protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     int32 mIndex_;
     

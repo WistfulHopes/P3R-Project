@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "MovieSceneSection.h"
 #include "MovieSceneEvtSeqTimeJumpControllerSectionData.h"
+#include <MovieScene/Public/Channels/MovieSceneChannelProxy.h>
 #include "MovieSceneEvtSeqTimeJumpControllerSection.generated.h"
 
 UCLASS(Blueprintable, MinimalAPI)
@@ -13,5 +14,6 @@ public:
     
 public:
     UMovieSceneEvtSeqTimeJumpControllerSection();
+public:
+    virtual EMovieSceneChannelProxyType CacheChannelProxy() override;
 };
-

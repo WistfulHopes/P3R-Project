@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "MovieSceneSection.h"
 #include "MovieSceneEvtMovieSectionData.h"
+#include <MovieScene/Public/Channels/MovieSceneChannelProxy.h>
 #include "MovieSceneEvtMovieSection.generated.h"
 
 UCLASS(Blueprintable, MinimalAPI)
@@ -12,5 +13,6 @@ public:
     FMovieSceneEvtMovieSectionData EventData;
     
     UMovieSceneEvtMovieSection();
+public:
+    virtual EMovieSceneChannelProxyType CacheChannelProxy() override;
 };
-

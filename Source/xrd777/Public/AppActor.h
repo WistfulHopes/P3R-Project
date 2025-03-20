@@ -37,7 +37,7 @@ public:
     void EndPlay(const TEnumAsByte<EEndPlayReason::Type> EndPlayReason);
     
     UFUNCTION(BlueprintCallable)
-    void BeginPlay();
+    virtual void BeginPlay() override;
     
     UFUNCTION(BlueprintCallable)
     UObject* AsUObject() { return (UObject*)this; }

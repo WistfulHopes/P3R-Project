@@ -23,7 +23,7 @@ UCLASS(Blueprintable)
 class XRD777_API AFldHitCharacter : public AFldHitCore {
     GENERATED_BODY()
 public:
-protected:
+//protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Instanced, meta=(AllowPrivateAccess=true))
     UShapeComponent* CollisionComp_;
     

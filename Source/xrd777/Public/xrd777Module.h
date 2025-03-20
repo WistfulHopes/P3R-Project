@@ -213,6 +213,7 @@ private:
 
 	void OnRemoveMeshNamePrefix(UContentBrowserDataMenuContext_AddNewMenu* DataContextObject);
 	void UncookAssetsInFolder(UContentBrowserDataMenuContext_AddNewMenu* DataContextObject);
+	void OnImportFbn(UContentBrowserDataMenuContext_AddNewMenu* DataContextObject);
 
 	TArray<TSharedPtr<FString>> RemoveNameByRegexOptions;
 	int32 RemoveNameByRegexOptionsSelectedId;
