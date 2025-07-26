@@ -29,5 +29,9 @@ public:
     TEnumAsByte<TextureAddress> AddressY;
     
     UManaComponentTexture();
+
+	virtual float GetSurfaceWidth() const override { return SizeX; }
+	virtual float GetSurfaceHeight() const override { return SizeY; }
+	virtual class FTextureResource* CreateResource() override { return nullptr;}
 };
 

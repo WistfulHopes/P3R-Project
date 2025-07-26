@@ -3,6 +3,11 @@
 void UManaTexture::SetMovieSource(UManaSource* InSource) {
 }
 
+class FTextureResource* UManaTexture::CreateResource()
+{
+	return nullptr;
+}
+
 UManaTexture::UManaTexture() {
     this->MovieSource = NULL;
     this->bRenderToTexture = false;

@@ -71,6 +71,9 @@ public:
     UManaTexture();
     UFUNCTION(BlueprintCallable)
     void SetMovieSource(UManaSource* InSource);
-    
+
+	virtual float GetSurfaceWidth() const override { return TargetDimensions.X; }
+	virtual float GetSurfaceHeight() const override { return TargetDimensions.Y; }
+	virtual class FTextureResource* CreateResource() override;
 };
 
